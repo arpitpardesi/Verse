@@ -64,7 +64,7 @@ struct ThemeTile: View {
     ]
     var body: some View {
         ZStack {
-            ThemeBackground(theme: theme, setting: "auto", colors: [.purple, .blue, .pink], art: nil)
+            ThemeBackground(theme: theme, setting: "auto", colors: [.purple, .blue, .pink], art: nil, animated: false)
             SyncedLyrics(theme: theme, lines: Self.sample, index: 1, pos: 6, s: LStyle(scale: 0.3))
                 .foregroundStyle(.white)
         }

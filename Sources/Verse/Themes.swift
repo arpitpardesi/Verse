@@ -38,6 +38,7 @@ struct ThemeBackground: View {
     let setting: String
     let colors: [Color]
     let art: NSImage?
+    var animated = true
 
     var body: some View {
         switch setting {
@@ -70,9 +71,15 @@ struct ThemeBackground: View {
         case .lens: LinearGradient(colors: [c1.opacity(0.55), .black], startPoint: .top, endPoint: .bottom)
         case .typewriter: Color(white: 0.08)
         case .poster: ZStack { Color.black; c0.opacity(0.3) }
-        case .stars: ZStack { Color.black; StarField(tint: c0).opacity(0.3) }
+        case .stars: Color.black
+        case .aura where !animated:
+            ZStack {
+                Color.black
+                Circle().fill(c0).frame(width: 200, height: 200).offset(x: -60)
+                Circle().fill(c1).frame(width: 200, height: 200).offset(x: 60, y: 30)
+            }.blur(radius: 30)
         case .aura:
-            TimelineView(.animation) { ctx in
+            TimelineView(.animation(minimumInterval: 1.0 / 20)) { ctx in
                 let t = ctx.date.timeIntervalSinceReferenceDate / 4
                 ZStack {
                     Color.black
@@ -106,21 +113,19 @@ struct SyncedLyrics: View {
         return min(1, max(0, (pos - start) / max(0.5, min(end - start, 8) * 0.9)))
     }
 
-    /// Words of the last three lines become stars; the word being sung is big and ringed.
+    /// Words of the last three lines become stars; each line gets its own horizontal band.
     func starToks(_ wi: Int) -> [Constellation.Tok] {
         var out: [Constellation.Tok] = []
         guard index >= 0, index < lines.count else { return out }
-        let spread = 0.45 + 0.55 * s.scatter
+        let wob = 0.4 + s.scatter
         for L in max(0, index - 2)...index {
-            for (k, w) in wordsOf(lines[L].text).enumerated() {
+            let ws = wordsOf(lines[L].text)
+            for (k, w) in ws.enumerated() {
                 if L == index && k > wi { break }
-                let rx = (jit(L, k + 3) + 1) / 2
-                let ry = (jit(L + 11, k) + 1) / 2
-                let d = (jit(L + 5, k + 9) + 1) / 2
-                out.append(Constellation.Tok(id: L * 1000 + k, text: w,
-                                             x: 0.5 + (rx - 0.5) * 0.8 * spread,
-                                             y: 0.42 + (ry - 0.5) * 0.7 * spread,
-                                             d: d, current: L == index && k == wi))
+                out.append(Constellation.Tok(id: L * 1000 + k, text: w, band: L % 3, slot: k, count: ws.count,
+                                             jx: jit(L, k + 3) * wob, jy: jit(L + 11, k) * wob,
+                                             d: (jit(L + 5, k + 9) + 1) / 2, age: index - L,
+                                             current: L == index && k == wi))
             }
         }
         return out
@@ -237,8 +242,7 @@ struct SyncedLyrics: View {
         case .stars:
             let ws = index >= 0 ? wordsOf(lines[index].text) : []
             let wi = min(max(ws.count - 1, 0), Int(progress * Double(ws.count)))
-            Constellation(toks: starToks(wi), s: s)
-                .animation(.easeOut(duration: 0.35), value: index * 1000 + wi)
+            Constellation(toks: starToks(wi), s: s).equatable()
 
         case .typewriter:
             let full = cur
@@ -352,55 +356,82 @@ struct StarShape: Shape {
     }
 }
 
-struct ConstToken: View {
-    let t: Constellation.Tok
-    let p: CGPoint
-    let s: LStyle
-    var body: some View {
-        ZStack {
-            if t.current {
-                Circle().stroke(s.accent.opacity(0.7), lineWidth: 1.5).frame(width: 64, height: 64).position(p)
-            }
-            StarShape().fill(Color.white.opacity(0.9))
-                .frame(width: t.current ? 24 : 12, height: t.current ? 24 : 12)
-                .shadow(color: s.accent, radius: 6).position(p)
-            Text(t.text)
-                .font(s.f(t.current ? 84 : 14 + 26 * CGFloat(t.d * t.d), .bold))
-                .foregroundStyle(s.accent.opacity(t.current ? 1 : 0.5 + 0.4 * t.d))
-                .blur(radius: t.current ? 0 : CGFloat((1 - t.d) * 2))
-                .shadow(color: t.current ? s.accent.opacity(0.8) : .clear, radius: 14)
-                .fixedSize()
-                .position(x: p.x + 6, y: p.y + (t.current ? 58 : 22))
-        }
-        .transition(.opacity.combined(with: .scale(scale: 0.7)))
-    }
-}
-
 /// Needle-style "Stars": words drift in as stars joined by thin constellation lines.
-struct Constellation: View {
-    struct Tok: Identifiable { let id: Int; let text: String; let x: Double; let y: Double; let d: Double; let current: Bool }
+/// Drawn in one Canvas and only redrawn when a new word appears (cheap).
+struct Constellation: View, Equatable {
+    struct Tok: Identifiable, Equatable {
+        let id: Int; let text: String; let band: Int; let slot: Int; let count: Int
+        let jx: Double; let jy: Double; let d: Double; let age: Int; let current: Bool
+    }
     let toks: [Tok]
     let s: LStyle
 
+    static func == (a: Constellation, b: Constellation) -> Bool {
+        a.toks == b.toks && a.s.accent == b.s.accent && a.s.font == b.s.font && a.s.scale == b.s.scale
+    }
+
+    func point(_ t: Tok, _ size: CGSize) -> CGPoint {
+        let slotW = size.width / CGFloat(max(t.count, 1))
+        let x = (CGFloat(t.slot) + 0.5) * slotW + CGFloat(t.jx) * slotW * 0.25
+        let bandY: [CGFloat] = [0.10, 0.32, 0.54]
+        let y = (bandY[t.band % 3] + CGFloat(t.jy) * 0.06) * size.height
+        return CGPoint(x: x, y: y)
+    }
+
     var body: some View {
         GeometryReader { g in
-            let pts = toks.map { CGPoint(x: $0.x * g.size.width, y: $0.y * g.size.height) }
+            let k = s.scale < 0.5 ? 1.0 : s.scale
             ZStack {
-                Canvas { c, _ in
+                Canvas { c, sz in
+                    let pts = toks.map { point($0, sz) }
                     for i in 1..<max(pts.count, 1) {
                         var a = Path(); a.move(to: pts[i - 1]); a.addLine(to: pts[i])
                         c.stroke(a, with: .color(s.accent.opacity(0.45)), lineWidth: 1.2)
                         if i >= 2 {
                             var b = Path(); b.move(to: pts[i - 2]); b.addLine(to: pts[i])
-                            c.stroke(b, with: .color(s.accent.opacity(0.2)), lineWidth: 1)
+                            c.stroke(b, with: .color(s.accent.opacity(0.18)), lineWidth: 1)
+                        }
+                    }
+                    for (i, t) in toks.enumerated() {
+                        let p = pts[i]
+                        let fade = 1 - 0.28 * Double(t.age)
+                        let r: CGFloat = t.current ? 9 : 5
+                        let star = StarShape().path(in: CGRect(x: p.x - r, y: p.y - r, width: 2 * r, height: 2 * r))
+                        c.fill(star, with: .color(Color.white.opacity(0.9 * fade)))
+                        if t.current {
+                            c.stroke(Path(ellipseIn: CGRect(x: p.x - 26, y: p.y - 26, width: 52, height: 52)),
+                                     with: .color(s.accent.opacity(0.7)), lineWidth: 1.5)
+                        } else {
+                            let slotW = sz.width / CGFloat(max(t.count, 1))
+                            let want = (14 + 22 * CGFloat(t.d * t.d)) * CGFloat(k)
+                            let fit = slotW / (0.6 * CGFloat(max(3, t.text.count)))
+                            let fs = max(9, min(want, fit))
+                            let label = Text(t.text).font(verseFont(s.font, fs, .bold))
+                                .foregroundColor(s.accent.opacity((0.5 + 0.4 * t.d) * fade))
+                            c.draw(label, at: CGPoint(x: p.x, y: p.y + 10), anchor: .top)
                         }
                     }
                 }
-                ForEach(Array(toks.enumerated()), id: \.element.id) { i, t in
-                    ConstToken(t: t, p: pts[i], s: s)
-                }
+                if let cur = toks.first(where: { $0.current }) { bigWord(cur, g.size, k) }
             }
         }
+    }
+
+    func bigWord(_ t: Tok, _ size: CGSize, _ k: Double) -> some View {
+        let chars = CGFloat(max(3, t.text.count))
+        let fs = min(size.height * 0.24 * CGFloat(k), size.width * 0.6 / (0.55 * chars))
+        let half = fs * 0.55 * chars / 2
+        let x = min(max(point(t, size).x, half + 12), max(size.width - half - 12, half + 12))
+        return ZStack {
+            Text(t.text).font(verseFont(s.font, fs, .heavy))
+                .foregroundStyle(s.accent)
+                .shadow(color: s.accent.opacity(0.8), radius: 14)
+                .fixedSize()
+                .position(x: x, y: size.height * 0.80)
+                .id(t.id)
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
+        }
+        .animation(.spring(duration: 0.25), value: t.id)
     }
 }
 
@@ -461,6 +492,11 @@ struct LyricsView: View {
     @AppStorage(K.mode) private var mode = "island"
 
     var theme: LyricTheme { LyricTheme(rawValue: themeRaw) ?? .bigWords }
+    /// Fill-style themes need smooth progress; the rest only change per word/line.
+    var tick: Double {
+        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric]
+        return smooth.contains(theme) ? 0.05 : 0.1
+    }
     var style: LStyle {
         LStyle(font: fontStyle, scale: scale, align: alignKey == "left" ? .leading : .center,
                upper: upper, accent: verseAccent(accent, np.colors), colors: np.colors,
@@ -486,7 +522,7 @@ struct LyricsView: View {
                 Text(text).font(style.f(20, .medium)).multilineTextAlignment(.center).padding(40)
             }
         case .synced(let lines):
-            TimelineView(.periodic(from: .now, by: 0.05)) { ctx in
+            TimelineView(.periodic(from: .now, by: tick)) { ctx in
                 let pos = np.position(at: ctx.date) + lyrics.totalOffset
                 SyncedLyrics(theme: theme, lines: lines, index: lineIndex(lines, pos), pos: pos, s: style)
             }
