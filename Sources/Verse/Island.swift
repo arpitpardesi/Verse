@@ -92,17 +92,21 @@ struct IslandView: View {
     /// Sits around the notch: art on the left ear, equalizer on the right, live lyric underneath.
     var compactClassic: some View {
         VStack(spacing: 0) {
-            HStack {
-                CoverView(art: np.artwork, size: 24)
-                Spacer()
+            // Ear row: cover on the left of the notch, equalizer on the right, gap exactly as wide as the notch.
+            HStack(spacing: 0) {
+                CoverView(art: np.artwork, size: 22)
+                    .padding(.leading, 16).frame(maxWidth: .infinity, alignment: .leading)
+                Color.clear.frame(width: NotchInfo.width)
                 EqualizerBars(tint: tint, height: 14)
+                    .padding(.trailing, 16).frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .padding(.horizontal, 20).frame(height: 34)
+            .frame(height: NotchInfo.height)
+            // Live lyric sits below the notch.
             TimelineView(.periodic(from: .now, by: 0.2)) { ctx in
                 Text(subtitle(ctx.date)).font(.system(size: 12, weight: .medium)).lineLimit(1)
                     .foregroundStyle(.white.opacity(0.85))
             }
-            .padding(.horizontal, 24).frame(height: 26)
+            .padding(.horizontal, 22).frame(height: 28)
         }
         .onTapGesture { expanded.toggle() }
     }
@@ -141,7 +145,36 @@ struct IslandView: View {
 
     // MARK: expanded
 
+    /// Top strip beside the notch: source on the left, weather + equalizer on the right.
+    var earRow: some View {
+        HStack(spacing: 0) {
+            HStack(spacing: 5) {
+                Image(systemName: np.track?.source == "Music" ? "applelogo" : "music.note.list")
+                Text(np.track?.source ?? "Verse")
+            }
+            .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.7))
+            .padding(.leading, 18).frame(maxWidth: .infinity, alignment: .leading)
+            Color.clear.frame(width: NotchInfo.width)
+            HStack(spacing: 8) {
+                if let t = weather.temp, !city.isEmpty {
+                    Image(systemName: weather.icon).font(.system(size: 11))
+                    Text("\(t)°").font(.system(size: 12, weight: .semibold))
+                }
+                EqualizerBars(tint: tint, height: 12)
+            }
+            .padding(.trailing, 18).frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .frame(height: NotchInfo.height)
+    }
+
     var expandedView: some View {
+        VStack(spacing: 0) {
+            if classic { earRow }
+            expandedBody
+        }
+    }
+
+    var expandedBody: some View {
         VStack(spacing: 12) {
             HStack(spacing: 14) {
                 CoverView(art: np.artwork, size: 84, radius: 16)
@@ -151,7 +184,7 @@ struct IslandView: View {
                     Text(np.track?.album ?? "").font(.system(size: 11)).foregroundStyle(.white.opacity(0.45)).lineLimit(1)
                 }
                 Spacer()
-                EqualizerBars(tint: tint)
+                if !classic { EqualizerBars(tint: tint) }
             }
             TimelineView(.periodic(from: .now, by: 0.2)) { ctx in
                 let p = pair(ctx.date)
@@ -165,7 +198,7 @@ struct IslandView: View {
             controls
             if weather.temp != nil && !city.isEmpty { weatherStrip }
         }
-        .padding(.horizontal, 22).padding(.top, classic ? 38 : 22).padding(.bottom, 16)
+        .padding(.horizontal, 22).padding(.top, classic ? 6 : 22).padding(.bottom, 16)
     }
 
     var controls: some View {

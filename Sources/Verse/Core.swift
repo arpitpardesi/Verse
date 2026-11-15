@@ -147,3 +147,16 @@ struct CoverView: View {
         .clipShape(RoundedRectangle(cornerRadius: radius ?? size * 0.22, style: .continuous))
     }
 }
+
+/// Real notch geometry of the main display, so nothing is ever drawn under the camera cut-out.
+enum NotchInfo {
+    static var hasNotch: Bool { (NSScreen.main?.safeAreaInsets.top ?? 0) > 0 }
+    /// Height of the notch (or a menu-bar-sized strip on Macs without one).
+    static var height: CGFloat { hasNotch ? (NSScreen.main?.safeAreaInsets.top ?? 32) : 28 }
+    /// Width of the notch cut-out; 0 on Macs without one.
+    static var width: CGFloat {
+        guard hasNotch, let scr = NSScreen.main,
+              let l = scr.auxiliaryTopLeftArea, let r = scr.auxiliaryTopRightArea else { return 0 }
+        return max(0, scr.frame.width - l.width - r.width)
+    }
+}

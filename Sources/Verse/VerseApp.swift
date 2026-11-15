@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let expanded = d.bool(forKey: K.expanded)
         let shape = d.string(forKey: K.shape) ?? "classic"
         let hasCity = !(d.string(forKey: K.city) ?? "").trimmingCharacters(in: .whitespaces).isEmpty
-        let sig = "\(mode)|\(expanded)|\(shape)|\(hasCity)"
+        let sig = "\(mode)|\(expanded)|\(shape)|\(hasCity)|\(screen.frame)"
         if sig != mainSig {
             mainSig = sig
             applyMain(screen, mode: mode, expanded: expanded, shape: shape, hasCity: hasCity)
@@ -119,8 +119,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             frame = f
             level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)) + 1)
         default:
-            let w: CGFloat = expanded ? 460 : 420
-            let h: CGFloat = expanded ? (hasCity ? 332 : 284) : (shape == "classic" ? 62 : 56)
+            let nh = NotchInfo.height, nw = NotchInfo.width
+            let extra: CGFloat = hasCity ? 48 : 0
+            let w: CGFloat, h: CGFloat
+            if shape == "classic" {
+                w = expanded ? max(480, nw + 260) : max(nw + 190, 340)
+                h = expanded ? nh + 250 + extra : nh + 28
+            } else {
+                w = expanded ? 460 : 400
+                h = expanded ? 268 + extra : 56
+            }
             let gap: CGFloat = shape == "classic" ? 0 : 10
             frame = NSRect(x: f.midX - w / 2, y: f.maxY - h - gap, width: w, height: h)
         }
