@@ -288,16 +288,142 @@ struct DiaryView: View {
 }
 
 struct AboutTab: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Verse").font(.largeTitle.bold())
-            Text("Free, open-source synced lyrics for your Mac notch.")
-            Text("Lyrics: LRCLIB · Weather: Open-Meteo · Artwork: iTunes Search / Spotify")
-                .font(.caption).foregroundStyle(.secondary)
-            Text("Works with Spotify and Apple Music. macOS asks once for permission to read the current song.")
-                .font(.caption).foregroundStyle(.secondary)
-            Spacer()
+    private var appIcon: NSImage? {
+        if let icon = NSApp.applicationIconImage, icon.isValid, icon.size.width > 32 {
+            return icon
         }
-        .padding(24).frame(maxWidth: .infinity, alignment: .leading)
+        if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
+           let img = NSImage(contentsOfFile: path) {
+            return img
+        }
+        for rel in ["Resources/AppIcon-1024.png", "Resources/AppIcon.icns"] {
+            if FileManager.default.fileExists(atPath: rel), let img = NSImage(contentsOfFile: rel) {
+                return img
+            }
+        }
+        return NSApp.applicationIconImage
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                // Header with App Icon and Title
+                HStack(alignment: .center, spacing: 20) {
+                    if let icon = appIcon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 84, height: 84)
+                            .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 4)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("Verse").font(.system(size: 26, weight: .bold))
+                            Text("v2.0").font(.system(size: 13, weight: .semibold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(.quaternary, in: Capsule())
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("Real-time synchronized lyrics & notch player for Mac")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Divider()
+
+                // Developer Card
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Created by").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
+                    HStack(spacing: 14) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 34))
+                            .foregroundStyle(.tint)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Arpit Pardesi").font(.system(size: 15, weight: .semibold))
+                            Text("Developer & Creator").font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if let githubURL = URL(string: "https://github.com/arpitpardesi") {
+                            Link(destination: githubURL) {
+                                Label("GitHub Profile", systemImage: "arrow.up.right.square")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                    }
+                    .padding(14)
+                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+                }
+
+                // Quick Links
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Project Links").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
+                    HStack(spacing: 10) {
+                        if let repoURL = URL(string: "https://github.com/arpitpardesi/Verse") {
+                            Link(destination: repoURL) {
+                                Label("Source Code", systemImage: "curlybraces")
+                            }
+                        }
+                        if let issuesURL = URL(string: "https://github.com/arpitpardesi/Verse/issues") {
+                            Link(destination: issuesURL) {
+                                Label("Report an Issue", systemImage: "ladybug")
+                            }
+                        }
+                        if let emailURL = URL(string: "mailto:arpit.pardesi6@gmail.com") {
+                            Link(destination: emailURL) {
+                                Label("Contact", systemImage: "envelope")
+                            }
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                // Acknowledgements & Data Sources
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Powered By").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Text("•").foregroundStyle(.secondary)
+                            Text("Lyrics:").foregroundStyle(.secondary)
+                            Link("LRCLIB", destination: URL(string: "https://lrclib.net")!)
+                                .font(.system(size: 12, weight: .medium))
+                            Text("— free, synchronized community lyrics database").font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+                        HStack(spacing: 6) {
+                            Text("•").foregroundStyle(.secondary)
+                            Text("Weather:").foregroundStyle(.secondary)
+                            Link("Open-Meteo", destination: URL(string: "https://open-meteo.com")!)
+                                .font(.system(size: 12, weight: .medium))
+                            Text("— open-source weather forecasting API").font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+                        HStack(spacing: 6) {
+                            Text("•").foregroundStyle(.secondary)
+                            Text("Artwork:").foregroundStyle(.secondary)
+                            Text("iTunes Search API & Spotify").font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.system(size: 12))
+                }
+
+                // Privacy & Open Source Note
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("100% Local & Private")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Verse runs entirely on your Mac with zero telemetry, tracking, or accounts. Licensed under MIT.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+
+                Spacer(minLength: 10)
+            }
+            .padding(24)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

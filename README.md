@@ -9,7 +9,7 @@
 [![Lyrics by LRCLIB](https://img.shields.io/badge/Lyrics-LRCLIB-blueviolet.svg)](https://lrclib.net)
 [![Privacy 100% Local](https://img.shields.io/badge/Privacy-100%25%20Local-brightgreen.svg)](#privacy--security)
 
-**Verse** transforms your MacBook’s display notch into an interactive Dynamic Island music hub with synchronized, word-by-word karaoke-style lyrics, media controls, desktop vinyl widgets, Bluetooth audio latency compensation, and a 100% private listening diary.
+**Verse** transforms your MacBook’s display notch into an interactive Dynamic Island music hub with synchronized, word-by-word karaoke-style lyrics, audio-reactive desktop light effects, vinyl turntable widgets, Bluetooth latency compensation, and a 100% private listening diary.
 
 Built natively in pure Swift & SwiftUI with **zero external dependencies**, **zero configuration**, and **zero accounts or API keys required**.
 
@@ -36,7 +36,7 @@ Built natively in pure Swift & SwiftUI with **zero external dependencies**, **ze
   - **Lyric Subtitle**: Live synced lyrics positioned cleanly beneath the notch.
 - **Floating Island Mode**: Automatically selected for external displays, Mac mini, Mac Studio, Mac Pro, and non-notch MacBooks. Renders as a floating pill capsule.
 - **Hover-to-Expand**: Glide your cursor over the notch or island (or click) to reveal full media controls:
-  - High-resolution album artwork & track / artist / album metadata
+  - High-resolution album artwork with optional atmospheric background art effects
   - Interactive scrubbable seek bar with live timestamp readouts
   - Play, pause, previous, next, and mini volume slider
   - Dual-line synchronized lyric preview (current active line + upcoming line)
@@ -44,14 +44,23 @@ Built natively in pure Swift & SwiftUI with **zero external dependencies**, **ze
 
 ---
 
-### 🎤 13 Cinematic Lyric Themes
-Verse includes 13 typography and animation themes that dynamically adapt to the color palette extracted from your currently playing album artwork:
+### 🎤 22 Cinematic Lyric Themes
+Verse includes 22 typography and animation themes that dynamically adapt to the color palette extracted from your currently playing album artwork:
 
 | Theme | Aesthetic & Behavior |
 |---|---|
 | **Big Words** | Ultra-bold typography focusing on the active line with ambient artwork glow. |
 | **Big Lines** | Full-width high-contrast lyrics with smooth multi-line vertical transitions. |
 | **Karaoke** | Real-time gradient fill that sweeps left-to-right across words as they are sung. |
+| **Wave** 🌊 | Words bob on organic liquid waves, illuminating on the beat with buoyant physics. |
+| **Pop** 🎈 | Word-by-word bouncy speech bubble bursts that explode rhythmically with the lyrics. |
+| **Echo** 🔊 | Concentric acoustic depth ripples reverberating behind the active lyric line. |
+| **Cinema** 🎬 | Letterboxed 2.39:1 widescreen view with progress timestamps and subtitle typography. |
+| **Liquid** 💧 | Shifting multi-color iridescent fluid sweeping across bold letters. |
+| **Synthwave** 🕹️ | Neon-drenched 80s wireframe grid with glowing sunset and perspective lines. |
+| **Vinyl** 💽 | Real-time spinning vinyl turntable disc floating alongside the active verse. |
+| **Glitch** ⚡ | Cyberpunk RGB color splitting and chromatic aberration on lyric changes. |
+| **Orbit** 🪐 | Words revolve around a 3D elliptical planetary trajectory, bringing the sung word forward. |
 | **Aura** | Living ambient backdrop with three fluid, blurred color orbs orbiting to the music. |
 | **Stars** | Twinkling particle starfield where sung words illuminate as celestial stars. |
 | **Terminal** | Retro monospaced command-line hacker aesthetic. |
@@ -65,22 +74,51 @@ Verse includes 13 typography and animation themes that dynamically adapt to the 
 
 ---
 
+### ⚡ Audio-Reactive Edge Glow
+Turn your entire display into an ambient music visualizer:
+- **Live System Audio Analysis**: Powered by Apple's `ScreenCaptureKit` (`AudioReactor`), Verse analyzes output audio in real time to detect low-end bass kicks and energy peaks without using your microphone.
+- **5 Glow Styles**:
+  - **Border Glow**: Sleek perimeter stroke pulsing to the rhythm.
+  - **Ripple**: Concentric shockwaves propagating inward from the screen borders.
+  - **Spectrum**: Equalizer bars dancing along display edges.
+  - **Corner Flares**: Explosive light bursts from the four corners on heavy bass drops.
+  - **Aurora**: Flowing northern-lights ambient curtains.
+- **4 Beat Sync Modes**:
+  - **Live Audio**: Real-time DSP bass beat detection.
+  - **Tempo (BPM)**: Rhythmic pulsing synced to track tempo.
+  - **Lyric Lines**: Pulses on each new lyric line transition.
+  - **Breathing**: Gentle ambient swell.
+- **Fine-Tuned Customization**: Adjust intensity, border width, audio sensitivity, and color mode (Album Palette, Rainbow, or custom accents).
+
+---
+
+### 🎨 Atmospheric Album Art Backgrounds
+Add rich depth behind lyrics and inside the Island with 6 selectable effects:
+- **Aura**: Orbiting, saturated color blur with fluid radial gradients.
+- **Soft Blur**: Heavy 60px atmospheric blur.
+- **Full Art**: Crisp artwork with subtle gradient vignette.
+- **Ken Burns**: Slow, cinematic panning and zoom camera motion.
+- **Duotone**: High-contrast black-and-white tinted with the album's primary accent.
+- **Split**: Elegant half-and-half gradient fade across the canvas.
+- Features dedicated toggles for the Lyrics window and Island, plus an adjustable dimming slider.
+
+---
+
 ### 🪟 5 Versatile Display Modes
 Switch modes at any time from the menu bar extra or Settings:
 1. **Island (Notch)**: Compact or expanded capsule attached to the notch or floating at the top of your display.
-2. **Lyrics Window**: A movable, floating window (`760×440`) that stays pinned above your active apps while working or coding.
+2. **Lyrics Window**: A movable, floating window (`760×440`) that stays pinned above your active apps while working or coding, featuring hover-activated top and bottom floating control bars.
 3. **Full Screen**: Immersive distraction-free lyric visualizer for parties, sing-alongs, or ambient displays.
 4. **Desktop Overlay**: Pins live lyrics directly onto your wallpaper beneath all active windows (`CGWindowLevelForKey(.desktopWindow) + 1`).
 5. **Hidden**: Keeps Verse running silently in the background for private listening statistics.
 
 ---
 
-### 🎨 Desktop Vinyl Widget & Edge Glow
-- **Interactive Vinyl Turntable**: Sits directly on your desktop wallpaper. The vinyl physically spins in sync with the song’s playback time, freezes on pause, and jumps when seeking:
+### 💽 Desktop Vinyl Widget
+- **Interactive Vinyl Turntable**: Sits directly on your desktop wallpaper. The vinyl physically spins in sync with playback, freezes on pause, and tracks seeks:
   - **Turntable**: Includes an animated tonearm that lowers into the groove during playback.
   - **Record Sleeve**: The spinning vinyl disc slides smoothly out of the album cover jacket.
   - **Aura Cover**: Album cover suspended over an ambient glowing color aura.
-- **Ambient Edge Glow**: A soft border light that travels smoothly around the perimeter of your entire display, matching the exact color palette of the album art.
 
 ---
 
@@ -169,13 +207,18 @@ swift build -c release
 
 ## 🔐 Permissions & First Launch
 
+### 1. Automation (Required)
 On the first launch, macOS will ask permission to allow **Verse** to control **Spotify** or **Music**:
-
 > **"Verse" wants access to control "Music" / "Spotify".**
 
 1. Click **Allow** / **OK**.
-2. If you accidentally clicked "Don't Allow", you can enable it at any time in:
+2. If you accidentally clicked "Don't Allow", enable it under:
    - **System Settings** → **Privacy & Security** → **Automation** → Check the box under **Verse** for **Spotify** and **Music**.
+
+### 2. Screen & System Audio Recording (Optional for Audio-Reactive Glow)
+To sync Edge Glow with live music output, Verse uses Apple's `ScreenCaptureKit` loopback audio capture.
+- Enable under: **System Settings** → **Privacy & Security** → **Screen & System Audio Recording** → Allow **Verse**.
+> *Note: Verse only captures system audio output (never the microphone or screen contents), converts sample buffers directly to instantaneous energy levels in memory, and immediately discards them. Nothing is ever saved or transmitted.*
 
 ---
 
@@ -183,18 +226,21 @@ On the first launch, macOS will ask permission to allow **Verse** to control **S
 
 ### Quick Actions via Menu Bar
 Click the Verse icon in your menu bar (`music.note.list`) to:
-- See the current playing track and album art
+- See the current playing track with album art, equalizer, seek bar, and transport controls
 - Switch display modes (**Island**, **Lyrics window**, **Full screen**, **Desktop**, **Hidden**)
 - Change the lyric theme with live preview
+- Toggle album art background effects, Edge Glow styles, and Desktop Record widget
 - Fine-tune sync timing (`-1s`, `-0.1s`, `+0.1s`, `+1s`, `Reset`)
 - **Copy lyric card** to clipboard & Desktop
 - **Set wallpaper from album colours**
 - Open **Settings…** or **Quit**
 
-### Settings Tabs Overview
-Open preferences via the menu bar or the gear icon in the expanded island:
-- **General**: Display mode picker, launch at login toggle, edge glow toggle, desktop vinyl widget & style picker (Turntable, Sleeve, Aura).
-- **Lyrics**: Interactive theme gallery, background style (Theme default, Black, Blurred cover, Glass), font styling (Rounded, Serif, Mono, System), alignment, accent colors, UPPERCASE switch, scale/scatter/lean sliders, and global latency delay slider.
+### Settings Navigation
+Preferences are organized into a modern macOS `NavigationSplitView` with 7 dedicated tabs:
+- **General**: Display mode picker, launch at login toggle, edge glow toggle, desktop vinyl widget styles, and quick tools.
+- **Lyric Themes**: Visual grid gallery of all 22 themes with live interactive preview tiles, typography settings (font style, text size, alignment, uppercase, scatter, lean, accent color), and global latency delay.
+- **Album Art**: Background album art settings with 6 visual effects (Aura, Soft blur, Full art, Ken Burns, Duotone, Split), dimming slider, and separate toggles for Lyrics window and Island.
+- **Edge Glow**: Style picker (Border, Ripple, Spectrum, Corner flares, Aurora), beat sync modes, color scheme, intensity, width, audio sensitivity, and beat tester.
 - **Island**: Shape selector (Classic Notch vs Floating Pill), hover expansion toggle, and Open-Meteo weather city configuration (°C / °F).
 - **Diary**: Personal scrobbling metrics (today, past week, all time) and top artists/songs charts.
 - **About**: Credits, source information, and API attribution.
@@ -207,24 +253,28 @@ Verse is built with performance and battery efficiency as primary design goals:
 
 ```
 Sources/Verse/
-├── VerseApp.swift     # Application delegate, NSPanel windowing & MenuBarExtra
-├── Core.swift         # Notch geometry (NotchInfo), color extraction & dynamic fonts
-├── NowPlaying.swift   # Spotify & Apple Music AppleScript polling engine
-├── Lyrics.swift       # LRCLIB API client, LRC parser & sync store
-├── Themes.swift       # 13 typography lyric themes & theme rendering container
-├── Island.swift       # Dynamic Island (Notch & Floating), seeker & media controls
-├── Record.swift       # Vinyl record desktop widget & animated edge glow
-├── Diary.swift        # Local JSON scrobbler & listening analytics
-├── Weather.swift      # Open-Meteo geocoding & forecast client
-├── Settings.swift     # SwiftUI Preferences tabs & live theme previews
-└── Share.swift        # 1080x1080 lyric card & desktop wallpaper generator
+├── VerseApp.swift       # Application delegate, NSPanel windowing & lifecycle
+├── Core.swift           # Notch geometry (NotchInfo), color extraction & fonts
+├── NowPlaying.swift     # Spotify & Apple Music AppleScript polling engine
+├── Lyrics.swift         # LRCLIB API client, LRC parser & sync store
+├── LyricsChrome.swift   # Hover-activated floating control bars for lyrics
+├── Themes.swift         # 22 typography lyric themes & theme rendering container
+├── Art.swift            # Atmospheric background album art effects (Aura, Ken Burns, etc.)
+├── Island.swift         # Dynamic Island (Notch & Floating), seeker & media controls
+├── Glow.swift           # ScreenCaptureKit live audio reactor & edge glow renderer
+├── Record.swift         # Vinyl record desktop widget (Turntable, Sleeve, Aura)
+├── MenuView.swift       # Menu bar extra popover with player & toggles
+├── Settings.swift       # NavigationSplitView settings tabs & theme galleries
+├── Weather.swift        # Open-Meteo geocoding & forecast client
+├── Diary.swift          # Local JSON scrobbler & listening analytics
+└── Share.swift          # 1080x1080 lyric card & desktop wallpaper generator
 ```
 
 - **AppKit + SwiftUI Hybrid**: Utilizes `NSPanel` with `.statusBar` and `.nonactivatingPanel` styles, configured with `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]` so the island and widgets persist across all macOS virtual spaces without stealing window focus.
 - **Hardware Notch Alignment**: `NotchInfo` inspects `NSScreen.main?.safeAreaInsets.top` and `auxiliaryTopLeftArea` / `auxiliaryTopRightArea` to determine physical notch margins dynamically, ensuring zero UI clipping across 14" and 16" MacBook Pro models or MacBook Airs.
 - **Dominant Color Extraction**: Custom RGB/HSV color quantization algorithm in `Core.swift` that downsamples artwork bitmaps to 24×24 pixels, calculates saturation-weighted hue distribution, and extracts up to 3 dominant theme colors.
-- **Synchronous Animation Engine**: Powered by SwiftUI `TimelineView(.animation)` and `TimelineView(.periodic)` to minimize CPU and GPU overhead when idle.
-- **Zero Third-Party Packages**: Everything uses native Apple frameworks (`AppKit`, `SwiftUI`, `Combine`, `ServiceManagement`, `Foundation`).
+- **Low-Overhead Live Audio**: `AudioReactor` runs on a dedicated background dispatch queue using `ScreenCaptureKit` to sample audio frames with zero UI thread contention.
+- **Zero Third-Party Packages**: Everything uses native Apple frameworks (`AppKit`, `SwiftUI`, `ScreenCaptureKit`, `Combine`, `ServiceManagement`, `Foundation`).
 
 ---
 
@@ -234,7 +284,7 @@ Sources/Verse/
 <summary><strong>What if lyrics are slightly ahead or behind the music?</strong></summary>
 
 - **Per-song adjustment**: Open the menu bar or Lyrics window and use the `−0.1s` / `+0.1s` or `−1s` / `+1s` buttons. Verse remembers this offset specifically for that track.
-- **Global Bluetooth headphone delay**: In **Settings → Lyrics → Sync**, adjust the **Global lyrics delay** slider (e.g. `+0.3s`) to compensate for Bluetooth audio latency across all songs.
+- **Global Bluetooth headphone delay**: In **Settings → Lyric Themes → Sync**, adjust the **Global lyrics delay** slider (e.g. `+0.3s`) to compensate for Bluetooth audio latency across all songs.
 </details>
 
 <details>

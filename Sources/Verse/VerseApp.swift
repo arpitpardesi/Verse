@@ -33,6 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ n: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        if let icon = Bundle.main.path(forResource: "AppIcon", ofType: "icns").flatMap({ NSImage(contentsOfFile: $0) }) ??
+                      NSImage(contentsOfFile: "Resources/AppIcon.icns") ??
+                      NSImage(contentsOfFile: "Resources/AppIcon-1024.png") {
+            NSApp.applicationIconImage = icon
+        }
         let d = UserDefaults.standard
         if d.object(forKey: K.shape) == nil {
             d.set((NSScreen.main?.safeAreaInsets.top ?? 0) > 0 ? "classic" : "floating", forKey: K.shape)
