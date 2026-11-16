@@ -1,0 +1,14 @@
+# Build products and temporary files
+.build/
+DerivedData/
+*.app
+
+# Xcode user-specific settings
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+.swiftpm/xcode/xcuserdata/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# macOS system files
+.DS_Store
