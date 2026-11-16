@@ -240,6 +240,41 @@ enum GlowRenderer {
         let w = CGFloat(width)
 
         switch style {
+        case "rim":
+            let path = Path(roundedRect: rect, cornerRadius: 24)
+            let speed = 70.0 + 40.0 * smp.level
+            let angle = (t * speed).truncatingRemainder(dividingBy: 360.0)
+
+            // Background ambient resting rim
+            c.stroke(path, with: .color(col(0).opacity(0.18 * power)), lineWidth: w * 0.8)
+
+            // Dynamic circulating gradient wave
+            let rimColors = [
+                col(0).opacity(0.1),
+                col(1).opacity(0.35),
+                col(2).opacity(0.85),
+                Color.white.opacity(0.98), // Leading comet head of the wave
+                col(0).opacity(0.95),
+                col(1).opacity(0.35),
+                col(0).opacity(0.1)
+            ]
+            let conic = GraphicsContext.Shading.conicGradient(
+                Gradient(colors: rimColors),
+                center: CGPoint(x: size.width / 2, y: size.height / 2),
+                angle: .degrees(angle)
+            )
+
+            // Multi-tier bloom layers on the rim
+            let rimWidths: [CGFloat] = [w * (1.0 + 0.9 * CGFloat(pulse)), w * (2.4 + 1.2 * CGFloat(pulse)), w * (4.5 + 2.0 * CGFloat(pulse))]
+            let rimOpacities: [Double] = [min(1.0, power * 1.4), min(0.7, power * 0.55), min(0.4, power * 0.28)]
+
+            for k in 0..<3 {
+                c.drawLayer { l in
+                    l.opacity = rimOpacities[k]
+                    l.stroke(path, with: conic, lineWidth: rimWidths[k])
+                }
+            }
+
         case "ripple":
             for age in smp.ages where age < 1.1 {
                 let inset = CGFloat(age) * 240
@@ -335,6 +370,7 @@ struct GlowTab: View {
             Section("Edge glow") {
                 Toggle("Show edge glow", isOn: $glow)
                 Picker("Style", selection: $style) {
+                    Text("Beat Glow Rim (Needle wave)").tag("rim")
                     Text("Border glow").tag("border")
                     Text("Ripple (rings from the edge)").tag("ripple")
                     Text("Spectrum bars").tag("spectrum")

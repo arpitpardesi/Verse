@@ -14,22 +14,93 @@ struct FillText: View {
 }
 
 struct StarField: View {
-    var tint: Color
+    var tint: Color = .purple
+    var secondary: Color = .blue
+    var animated: Bool = true
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 20)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, size in
-                let t = ctx.date.timeIntervalSinceReferenceDate
-                for i in 0..<90 {
-                    let a = Double((i * 7919) % 1000) / 1000
-                    let b = Double((i * 104729) % 997) / 997
-                    let tw = 0.4 + 0.6 * abs(sin(t * (0.5 + a) + Double(i)))
-                    let r = 1 + 2 * a
-                    let rect = CGRect(x: a * size.width, y: b * size.height, width: r, height: r)
-                    c.fill(Path(ellipseIn: rect), with: .color((i % 5 == 0 ? tint : Color.white).opacity(tw)))
+                // 1. Cosmic Deep Space Background
+                let bgRect = CGRect(origin: .zero, size: size)
+                let spaceGrad = Gradient(stops: [
+                    .init(color: Color(red: 0.03, green: 0.04, blue: 0.10), location: 0),
+                    .init(color: Color(red: 0.015, green: 0.015, blue: 0.05), location: 0.65),
+                    .init(color: Color(red: 0.008, green: 0.008, blue: 0.025), location: 1.0)
+                ])
+                c.fill(Path(bgRect), with: .linearGradient(spaceGrad, startPoint: .zero, endPoint: CGPoint(x: size.width, y: size.height)))
+
+                // 2. Soft Ambient Cosmic Nebula Glows
+                let neb1X = size.width * (0.35 + 0.14 * sin(t * 0.05))
+                let neb1Y = size.height * (0.45 + 0.12 * cos(t * 0.04))
+                let r1 = max(size.width, size.height) * 0.45
+                c.fill(Path(ellipseIn: CGRect(x: neb1X - r1, y: neb1Y - r1, width: r1 * 2, height: r1 * 2)),
+                       with: .radialGradient(Gradient(colors: [tint.opacity(0.18), .clear]),
+                                             center: CGPoint(x: neb1X, y: neb1Y), startRadius: 0, endRadius: r1))
+
+                let neb2X = size.width * (0.68 + 0.12 * cos(t * 0.06))
+                let neb2Y = size.height * (0.58 + 0.10 * sin(t * 0.05))
+                let r2 = max(size.width, size.height) * 0.40
+                c.fill(Path(ellipseIn: CGRect(x: neb2X - r2, y: neb2Y - r2, width: r2 * 2, height: r2 * 2)),
+                       with: .radialGradient(Gradient(colors: [secondary.opacity(0.14), .clear]),
+                                             center: CGPoint(x: neb2X, y: neb2Y), startRadius: 0, endRadius: r2))
+
+                // 3. Multi-layer Twinkling Starfield
+                for i in 0..<110 {
+                    let a = Double((i * 7919) % 1000) / 1000.0
+                    let b = Double((i * 104729) % 997) / 997.0
+                    let speed = 0.4 + 1.2 * Double((i * 31) % 100) / 100.0
+                    let phase = Double((i * 53) % 100) / 100.0 * .pi * 2
+                    let tw = 0.25 + 0.75 * (0.5 + 0.5 * sin(t * speed + phase))
+
+                    let tier = i % 10
+                    let r: CGFloat
+                    let starColor: Color
+                    if tier == 0 {
+                        // Rare brighter star with subtle cross flare
+                        r = 2.4
+                        starColor = (i % 3 == 0 ? tint : Color.white)
+                        let center = CGPoint(x: a * size.width, y: b * size.height)
+                        let spike = r * 2.8 * CGFloat(tw)
+                        var hPath = Path(); hPath.move(to: CGPoint(x: center.x - spike, y: center.y)); hPath.addLine(to: CGPoint(x: center.x + spike, y: center.y))
+                        var vPath = Path(); vPath.move(to: CGPoint(x: center.x, y: center.y - spike)); vPath.addLine(to: CGPoint(x: center.x, y: center.y + spike))
+                        c.stroke(hPath, with: .color(starColor.opacity(0.4 * tw)), lineWidth: 0.8)
+                        c.stroke(vPath, with: .color(starColor.opacity(0.4 * tw)), lineWidth: 0.8)
+                    } else if tier < 4 {
+                        r = 1.6
+                        starColor = (i % 4 == 0 ? secondary : Color.white)
+                    } else {
+                        r = 0.95
+                        starColor = Color(white: 0.92)
+                    }
+
+                    let rect = CGRect(x: a * size.width - r, y: b * size.height - r, width: r * 2, height: r * 2)
+                    c.fill(Path(ellipseIn: rect), with: .color(starColor.opacity(tw)))
+                }
+
+                // 4. Occasional Shooting Star (Meteor)
+                let meteorCycle = t.truncatingRemainder(dividingBy: 14.0)
+                if animated && meteorCycle < 0.85 {
+                    let mp = meteorCycle / 0.85
+                    let sx = size.width * 0.15 + (size.width * 0.70) * CGFloat(mp)
+                    let sy = size.height * 0.08 + (size.height * 0.42) * CGFloat(mp)
+                    let trailLen: CGFloat = 85.0
+                    let tailX = sx - trailLen * 0.85
+                    let tailY = sy - trailLen * 0.53
+                    var meteorPath = Path()
+                    meteorPath.move(to: CGPoint(x: tailX, y: tailY))
+                    meteorPath.addLine(to: CGPoint(x: sx, y: sy))
+                    c.stroke(meteorPath,
+                             with: .linearGradient(Gradient(colors: [.clear, Color.white.opacity(Double(1.0 - mp * 0.4))]),
+                                                   startPoint: CGPoint(x: tailX, y: tailY),
+                                                   endPoint: CGPoint(x: sx, y: sy)),
+                             lineWidth: 1.5)
+                    c.fill(Path(ellipseIn: CGRect(x: sx - 2, y: sy - 2, width: 4, height: 4)),
+                           with: .color(Color.white.opacity(Double(1.0 - mp * 0.5))))
                 }
             }
         }
-        .background(Color(red: 0.02, green: 0.02, blue: 0.08))
     }
 }
 
@@ -42,7 +113,7 @@ struct ThemeBackground: View {
 
     var body: some View {
         switch setting {
-        case "black": Color.black
+        case "black" where theme != .stars: Color.black
         case "glass": ZStack { Color.black.opacity(0.35); Rectangle().fill(.ultraThinMaterial) }
         case "cover" where art != nil:
             GeometryReader { g in
@@ -80,7 +151,7 @@ struct ThemeBackground: View {
         case .lens: LinearGradient(colors: [c1.opacity(0.55), .black], startPoint: .top, endPoint: .bottom)
         case .typewriter: Color(white: 0.08)
         case .poster: ZStack { Color.black; c0.opacity(0.3) }
-        case .stars: Color.black
+        case .stars: StarField(tint: c0, secondary: c1, animated: animated)
         case .aura where !animated:
             ZStack {
                 Color.black
@@ -258,9 +329,7 @@ struct SyncedLyrics: View {
             .animation(.easeInOut(duration: 0.35), value: index)
 
         case .stars:
-            let ws = index >= 0 ? wordsOf(lines[index].text) : []
-            let wi = min(max(ws.count - 1, 0), Int(progress * Double(ws.count)))
-            Constellation(toks: starToks(wi), s: s).equatable()
+            Constellation(lines: lines, index: index, pos: pos, s: s, animated: animated)
 
         case .typewriter:
             let full = cur
@@ -634,84 +703,334 @@ struct StarShape: Shape {
     }
 }
 
-/// Needle-style "Stars": every word is a star, joined by thin constellation lines.
-/// The net is drawn once per word (cheap); only the pulsing ring on the current star animates.
+/// Needle-style "Stars": fluid celestial constellation where lyrics illuminate as glowing stars
+/// scattered in 2D space across the entire screen. The current sung word ignites as a brilliant
+/// celestial beacon with diffraction flares, breathing auras, and expanding gravitational pulse rings.
 struct Constellation: View, Equatable {
     struct Tok: Identifiable, Equatable {
         let id: Int; let text: String; let x: Double; let y: Double
         let d: Double; let age: Int; let current: Bool
     }
-    let toks: [Tok]
-    let s: LStyle
 
-    static func == (a: Constellation, b: Constellation) -> Bool {
-        a.toks == b.toks && a.s.accent == b.s.accent && a.s.font == b.s.font && a.s.scale == b.s.scale
+    var lines: [LyricLine] = []
+    var index: Int = -1
+    var pos: Double = 0
+    var s: LStyle
+    var animated: Bool = true
+    var toks: [Tok] = []
+
+    init(lines: [LyricLine], index: Int, pos: Double, s: LStyle, animated: Bool = true) {
+        self.lines = lines
+        self.index = index
+        self.pos = pos
+        self.s = s
+        self.animated = animated
+        self.toks = []
     }
 
-    func point(_ t: Tok, _ size: CGSize) -> CGPoint {
-        CGPoint(x: CGFloat(t.x) * size.width, y: CGFloat(t.y) * size.height)
+    init(toks: [Tok], s: LStyle, animated: Bool = true) {
+        self.lines = []
+        self.index = -1
+        self.pos = 0
+        self.s = s
+        self.animated = animated
+        self.toks = toks
+    }
+
+    static func == (a: Constellation, b: Constellation) -> Bool {
+        a.index == b.index && abs(a.pos - b.pos) < 0.005 && a.s.accent == b.s.accent && a.s.font == b.s.font && a.s.scale == b.s.scale && a.animated == b.animated
+    }
+
+    private func wordsOf(_ t: String) -> [String] {
+        t.split(separator: " ").map(String.init)
+    }
+
+    private func jit(_ a: Int, _ b: Int) -> Double {
+        let x = sin(Double(a) * 12.9898 + Double(b) * 78.233) * 43758.5453
+        return (x - x.rounded(.down)) * 2 - 1
     }
 
     var body: some View {
-        let k = s.scale < 0.5 ? 1.0 : s.scale
-        ZStack {
+        let k_scale = s.scale < 0.4 ? 0.7 : s.scale
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : pos
             Canvas { c, sz in
-                let pts = toks.map { point($0, sz) }
-                // 1. constellation lines: previous star, plus fainter links two and three stars back
-                for i in 1..<max(pts.count, 1) {
-                    let fade = 1 - 0.28 * Double(toks[i].age)
-                    var a = Path(); a.move(to: pts[i - 1]); a.addLine(to: pts[i])
-                    c.stroke(a, with: .color(s.accent.opacity(0.5 * fade)), lineWidth: 1.2)
-                    if i >= 2 {
-                        var b = Path(); b.move(to: pts[i - 2]); b.addLine(to: pts[i])
-                        c.stroke(b, with: .color(s.accent.opacity(0.22 * fade)), lineWidth: 0.9)
-                    }
-                    if i >= 3 {
-                        var d = Path(); d.move(to: pts[i - 3]); d.addLine(to: pts[i])
-                        c.stroke(d, with: .color(s.accent.opacity(0.12 * fade)), lineWidth: 0.7)
+                // 1. Ambient celestial micro-stars (ensures depth across all backgrounds and desktop mode)
+                for i in 0..<36 {
+                    let ax = Double((i * 4919) % 1000) / 1000.0
+                    let ay = Double((i * 84729) % 997) / 997.0
+                    let spd = 0.8 + 1.2 * Double((i * 37) % 50) / 50.0
+                    let ph = Double((i * 71) % 100) / 100.0 * .pi * 2
+                    let tw = 0.2 + 0.8 * (0.5 + 0.5 * sin(t * spd + ph))
+                    let r: CGFloat = (i % 5 == 0) ? 1.6 : 1.0
+                    c.fill(Path(ellipseIn: CGRect(x: ax * sz.width - r, y: ay * sz.height - r, width: r * 2, height: r * 2)),
+                           with: .color(Color.white.opacity(tw * 0.5)))
+                }
+
+                // If fallback toks provided and no lines
+                if lines.isEmpty && !toks.isEmpty {
+                    renderLegacyToks(c: c, sz: sz, t: t, k_scale: k_scale)
+                    return
+                }
+
+                // Empty / idle state
+                guard index >= 0, index < lines.count else {
+                    let center = CGPoint(x: sz.width * 0.5, y: sz.height * 0.5)
+                    let pulse = 0.5 + 0.5 * sin(t * 2.5)
+                    let r = (20 + 8 * CGFloat(pulse)) * CGFloat(k_scale)
+                    c.stroke(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
+                             with: .color(s.accent.opacity(0.35 + 0.4 * pulse)), lineWidth: 1.5)
+                    c.fill(Path(ellipseIn: CGRect(x: center.x - 6, y: center.y - 6, width: 12, height: 12)),
+                           with: .color(Color.white.opacity(0.9)))
+                    let label = Text("♪").font(verseFont(s.font, 28 * CGFloat(k_scale), .bold)).foregroundColor(s.accent)
+                    c.draw(label, at: CGPoint(x: center.x, y: center.y + 24 * CGFloat(k_scale)), anchor: .top)
+                    return
+                }
+
+                // Active line calculations
+                let curLine = lines[index]
+                let nextTime = index + 1 < lines.count ? lines[index + 1].time : curLine.time + 4.5
+                let lineDur = max(0.6, nextTime - curLine.time)
+                let elapsed = max(0, pos - curLine.time)
+                let lineProg = min(1.0, max(0.0, elapsed / (lineDur * 0.95)))
+
+                let curWords = wordsOf(curLine.text)
+                let N = max(1, curWords.count)
+                let wordPos = lineProg * Double(N)
+                let curWordIdx = min(N - 1, max(0, Int(wordPos)))
+                let wordFraction = wordPos - Double(curWordIdx)
+
+                // Build 2D scattered constellation stars (non-linear low-discrepancy distribution)
+                let spread = 0.6 + 0.4 * s.scatter
+                struct StarNode {
+                    let id: Int
+                    let text: String
+                    let pt: CGPoint
+                    let d: Double
+                    let age: Int
+                    let isCurrent: Bool
+                }
+
+                var stars: [StarNode] = []
+                let startLine = max(0, index - 2)
+                if startLine <= index {
+                    for L in startLine...index {
+                        let ws = wordsOf(lines[L].text)
+                        for (k, w) in ws.enumerated() {
+                            if L == index && k > curWordIdx { break }
+                            let n = Double(L * 16 + k + 1)
+                            let rx = (0.5 + n * 0.7548776662466927).truncatingRemainder(dividingBy: 1)
+                            let ry = (0.5 + n * 0.5698402909980532).truncatingRemainder(dividingBy: 1)
+                            let nx = 0.08 + 0.84 * (0.5 + (rx - 0.5) * spread)
+                            let ny = 0.10 + 0.80 * (0.5 + (ry - 0.5) * spread)
+                            let pt = CGPoint(x: nx * sz.width, y: ny * sz.height)
+                            let dVal = (jit(L + 5, k + 9) + 1) / 2
+                            stars.append(StarNode(id: L * 1000 + k, text: w, pt: pt, d: dVal, age: index - L, isCurrent: (L == index && k == curWordIdx)))
+                        }
                     }
                 }
-                // 2. stars + word labels
-                for (i, t) in toks.enumerated() {
-                    let p = pts[i]
-                    let fade = 1 - 0.28 * Double(t.age)
-                    let r: CGFloat = t.current ? 11 : 4 + 3 * CGFloat(t.d)
-                    let rect = CGRect(x: p.x - r, y: p.y - r, width: 2 * r, height: 2 * r)
-                    c.fill(Path(ellipseIn: rect.insetBy(dx: -r * 0.9, dy: -r * 0.9)),
-                           with: .color(s.accent.opacity(0.10 * fade)))
-                    c.fill(StarShape().path(in: rect), with: .color(Color.white.opacity(0.95 * fade)))
 
-                    let onRight = p.x < sz.width * 0.72
-                    let at = CGPoint(x: p.x + (onRight ? r + 7 : -(r + 7)), y: p.y)
-                    let anchor: UnitPoint = onRight ? .leading : .trailing
-                    if t.current {
-                        let fs = min(sz.height * 0.11, 44) * CGFloat(k)
-                        let label = Text(t.text).font(verseFont(s.font, fs, .heavy)).foregroundColor(s.accent)
+                guard !stars.isEmpty else { return }
+
+                // 2. Draw Constellation Connecting Lines in 2D space
+                if stars.count > 1 {
+                    for i in 1..<stars.count {
+                        let isLastSegment = (i == stars.count - 1 && stars[i].isCurrent)
+                        let fade = max(0.1, 1.0 - 0.28 * Double(stars[i].age))
+
+                        if isLastSegment {
+                            // Actively drawing glowing energy beam to current word!
+                            let drawP = min(1.0, max(0.0, wordFraction / 0.35))
+                            let smoothDraw = drawP * drawP * (3.0 - 2.0 * drawP)
+                            let p0 = stars[i - 1].pt
+                            let p1 = stars[i].pt
+                            let head = CGPoint(x: p0.x + (p1.x - p0.x) * CGFloat(smoothDraw),
+                                               y: p0.y + (p1.y - p0.y) * CGFloat(smoothDraw))
+
+                            var beam = Path(); beam.move(to: p0); beam.addLine(to: head)
+                            // Outer beam glow
+                            c.stroke(beam, with: .color(s.accent.opacity(0.40)), lineWidth: 3.5 * CGFloat(k_scale))
+                            // Core beam
+                            c.stroke(beam, with: .linearGradient(
+                                Gradient(colors: [s.accent.opacity(0.8), Color.white.opacity(0.95)]),
+                                startPoint: p0, endPoint: head), lineWidth: 1.6 * CGFloat(k_scale))
+
+                            // Traveling photon spark
+                            if smoothDraw < 0.98 {
+                                c.fill(Path(ellipseIn: CGRect(x: head.x - 3.5, y: head.y - 3.5, width: 7, height: 7)),
+                                       with: .color(Color.white))
+                                c.fill(Path(ellipseIn: CGRect(x: head.x - 7, y: head.y - 7, width: 14, height: 14)),
+                                       with: .color(s.accent.opacity(0.6)))
+                            }
+
+                            // Faint guide for the rest of this active segment
+                            if smoothDraw < 1.0 {
+                                var rem = Path(); rem.move(to: head); rem.addLine(to: p1)
+                                c.stroke(rem, with: .color(Color.white.opacity(0.12)),
+                                         style: StrokeStyle(lineWidth: 0.9 * CGFloat(k_scale), dash: [4, 4]))
+                            }
+                        } else {
+                            // Completed previous line
+                            var a = Path(); a.move(to: stars[i - 1].pt); a.addLine(to: stars[i].pt)
+                            c.stroke(a, with: .color(s.accent.opacity(0.48 * fade)), lineWidth: 1.3 * CGFloat(k_scale))
+                        }
+
+                        // Constellation Triangulation Chords (2 and 3 stars back)
+                        if i >= 2 {
+                            var b = Path(); b.move(to: stars[i - 2].pt); b.addLine(to: stars[i].pt)
+                            c.stroke(b, with: .color(s.accent.opacity(0.20 * fade)), lineWidth: 0.9 * CGFloat(k_scale))
+                        }
+                        if i >= 3 {
+                            var dPath = Path(); dPath.move(to: stars[i - 3].pt); dPath.addLine(to: stars[i].pt)
+                            c.stroke(dPath, with: .color(s.accent.opacity(0.11 * fade)), lineWidth: 0.7 * CGFloat(k_scale))
+                        }
+                    }
+                }
+
+                // 3. Draw Stars and Labels
+                for star in stars {
+                    let p = star.pt
+                    let fade = max(0.1, 1.0 - 0.28 * Double(star.age))
+
+                    if star.isCurrent {
+                        // --- THE ACTIVE HERO STAR ---
+                        let bloom = CGFloat(sin(t * 3.2) * 0.14 + 1.0)
+                        let heroScale = CGFloat(k_scale) * bloom
+
+                        // 1. Concentric Gravitational Pulse Waves
+                        let ringPhase1 = (t * 1.8).truncatingRemainder(dividingBy: 1.0)
+                        let r1 = (11.0 + 36.0 * CGFloat(ringPhase1)) * heroScale
+                        let op1 = 0.75 * (1.0 - ringPhase1)
+                        c.stroke(Path(ellipseIn: CGRect(x: p.x - r1, y: p.y - r1, width: r1 * 2, height: r1 * 2)),
+                                 with: .color(s.accent.opacity(op1)), lineWidth: 1.5)
+
+                        let ringPhase2 = (t * 1.8 + 0.5).truncatingRemainder(dividingBy: 1.0)
+                        let r2 = (11.0 + 36.0 * CGFloat(ringPhase2)) * heroScale
+                        let op2 = 0.50 * (1.0 - ringPhase2)
+                        c.stroke(Path(ellipseIn: CGRect(x: p.x - r2, y: p.y - r2, width: r2 * 2, height: r2 * 2)),
+                                 with: .color(s.accent.opacity(op2)), lineWidth: 1.2)
+
+                        // 2. Multi-layer Stellar Aura
+                        let haloR: CGFloat = 32.0 * heroScale
+                        c.fill(Path(ellipseIn: CGRect(x: p.x - haloR, y: p.y - haloR, width: haloR * 2, height: haloR * 2)),
+                               with: .radialGradient(Gradient(colors: [s.accent.opacity(0.35), .clear]),
+                                                     center: p, startRadius: 0, endRadius: haloR))
+
+                        let midR: CGFloat = 15.0 * heroScale
+                        c.fill(Path(ellipseIn: CGRect(x: p.x - midR, y: p.y - midR, width: midR * 2, height: midR * 2)),
+                               with: .color(s.accent.opacity(0.65)))
+
+                        let coreR: CGFloat = 5.5 * heroScale
+                        c.fill(Path(ellipseIn: CGRect(x: p.x - coreR, y: p.y - coreR, width: coreR * 2, height: coreR * 2)),
+                               with: .color(Color.white.opacity(0.98)))
+
+                        // 3. Diffraction Spikes (Celestial Cross Flare)
+                        let spkLen: CGFloat = (26.0 + 4.0 * sin(t * 2.6)) * heroScale
+                        let spkW: CGFloat = 1.8 * heroScale
+
+                        var hSpk = Path()
+                        hSpk.move(to: CGPoint(x: p.x - spkLen, y: p.y))
+                        hSpk.addLine(to: CGPoint(x: p.x, y: p.y - spkW))
+                        hSpk.addLine(to: CGPoint(x: p.x + spkLen, y: p.y))
+                        hSpk.addLine(to: CGPoint(x: p.x, y: p.y + spkW))
+                        hSpk.closeSubpath()
+                        c.fill(hSpk, with: .color(Color.white.opacity(0.92)))
+
+                        var vSpk = Path()
+                        vSpk.move(to: CGPoint(x: p.x, y: p.y - spkLen))
+                        vSpk.addLine(to: CGPoint(x: p.x - spkW, y: p.y))
+                        vSpk.addLine(to: CGPoint(x: p.x, y: p.y + spkLen))
+                        vSpk.addLine(to: CGPoint(x: p.x + spkW, y: p.y))
+                        vSpk.closeSubpath()
+                        c.fill(vSpk, with: .color(Color.white.opacity(0.92)))
+
+                        let diagLen = spkLen * 0.44
+                        let diagW = spkW * 0.75
+                        let cos45 = CGFloat(0.7071)
+                        let sin45 = CGFloat(0.7071)
+                        var d1 = Path()
+                        d1.move(to: CGPoint(x: p.x - diagLen * cos45, y: p.y - diagLen * sin45))
+                        d1.addLine(to: CGPoint(x: p.x + diagW * sin45, y: p.y - diagW * cos45))
+                        d1.addLine(to: CGPoint(x: p.x + diagLen * cos45, y: p.y + diagLen * sin45))
+                        d1.addLine(to: CGPoint(x: p.x - diagW * sin45, y: p.y + diagW * cos45))
+                        d1.closeSubpath()
+                        c.fill(d1, with: .color(Color.white.opacity(0.55)))
+
+                        var d2 = Path()
+                        d2.move(to: CGPoint(x: p.x - diagLen * cos45, y: p.y + diagLen * sin45))
+                        d2.addLine(to: CGPoint(x: p.x + diagW * sin45, y: p.y + diagW * cos45))
+                        d2.addLine(to: CGPoint(x: p.x + diagLen * cos45, y: p.y - diagLen * sin45))
+                        d2.addLine(to: CGPoint(x: p.x - diagW * sin45, y: p.y - diagW * cos45))
+                        d2.closeSubpath()
+                        c.fill(d2, with: .color(Color.white.opacity(0.55)))
+
+                        // Label placement (intelligent boundary awareness)
+                        let onRight = p.x < sz.width * 0.72
+                        let r = 11.0 * heroScale
+                        let at = CGPoint(x: p.x + (onRight ? r + 9 : -(r + 9)), y: p.y)
+                        let anchor: UnitPoint = onRight ? .leading : .trailing
+
+                        let fs = min(sz.height * 0.11, 44) * CGFloat(k_scale)
+                        let label = Text(s.t(star.text)).font(verseFont(s.font, fs, .heavy)).foregroundColor(s.accent)
                         c.drawLayer { l in
-                            l.addFilter(.shadow(color: s.accent.opacity(0.85), radius: 12))
+                            l.addFilter(.shadow(color: Color.black.opacity(0.9), radius: 6))
+                            l.addFilter(.shadow(color: s.accent.opacity(0.85), radius: 14))
                             l.draw(label, at: at, anchor: anchor)
                         }
                     } else {
-                        let fs = (13 + 17 * CGFloat(t.d * t.d)) * CGFloat(k)
-                        let label = Text(t.text).font(verseFont(s.font, fs, .bold))
-                            .foregroundColor(s.accent.opacity((0.5 + 0.4 * t.d) * fade))
-                        c.draw(label, at: at, anchor: anchor)
+                        // Past star in constellation
+                        let r: CGFloat = (4.0 + 3.0 * CGFloat(star.d)) * CGFloat(k_scale)
+                        c.fill(Path(ellipseIn: CGRect(x: p.x - r * 1.8, y: p.y - r * 1.8, width: r * 3.6, height: r * 3.6)),
+                               with: .color(s.accent.opacity(0.20 * fade)))
+                        c.fill(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2.0, height: r * 2.0)),
+                               with: .color(Color.white.opacity(0.92 * fade)))
+
+                        // Micro cross-flare for variety
+                        if star.d > 0.4 {
+                            let spk = r * 1.6
+                            var cross = Path()
+                            cross.move(to: CGPoint(x: p.x - spk, y: p.y)); cross.addLine(to: CGPoint(x: p.x + spk, y: p.y))
+                            cross.move(to: CGPoint(x: p.x, y: p.y - spk)); cross.addLine(to: CGPoint(x: p.x, y: p.y + spk))
+                            c.stroke(cross, with: .color(Color.white.opacity(0.35 * fade)), lineWidth: 0.8)
+                        }
+
+                        // Label placement
+                        let onRight = p.x < sz.width * 0.72
+                        let at = CGPoint(x: p.x + (onRight ? r + 7 : -(r + 7)), y: p.y)
+                        let anchor: UnitPoint = onRight ? .leading : .trailing
+
+                        let fs = (13 + 17 * CGFloat(star.d * star.d)) * CGFloat(k_scale)
+                        let label = Text(s.t(star.text)).font(verseFont(s.font, fs, .bold))
+                            .foregroundColor(s.accent.opacity((0.55 + 0.35 * star.d) * fade))
+                        c.drawLayer { l in
+                            l.addFilter(.shadow(color: Color.black.opacity(0.6), radius: 4))
+                            l.draw(label, at: at, anchor: anchor)
+                        }
                     }
                 }
             }
-            if let cur = toks.first(where: { $0.current }) {
-                TimelineView(.animation(minimumInterval: 1.0 / 15)) { ctx in
-                    Canvas { c, sz in
-                        let p = point(cur, sz)
-                        let pulse = 0.5 + 0.5 * sin(ctx.date.timeIntervalSinceReferenceDate * 3)
-                        let r = 24 + 6 * CGFloat(pulse)
-                        c.stroke(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: 2 * r, height: 2 * r)),
-                                 with: .color(s.accent.opacity(0.3 + 0.4 * pulse)), lineWidth: 1.5)
-                        c.fill(Path(ellipseIn: CGRect(x: p.x - 16, y: p.y - 16, width: 32, height: 32)),
-                               with: .color(s.accent.opacity(0.2 * pulse)))
-                    }
-                }
+        }
+    }
+
+    private func renderLegacyToks(c: GraphicsContext, sz: CGSize, t: Double, k_scale: Double) {
+        let pts = toks.map { CGPoint(x: CGFloat($0.x) * sz.width, y: CGFloat($0.y) * sz.height) }
+        if pts.count > 1 {
+            for i in 1..<pts.count {
+                let fade = 1.0 - 0.28 * Double(toks[i].age)
+                var a = Path(); a.move(to: pts[i - 1]); a.addLine(to: pts[i])
+                c.stroke(a, with: .color(s.accent.opacity(0.5 * fade)), lineWidth: 1.3)
             }
+        }
+        for (i, tok) in toks.enumerated() {
+            let p = pts[i]
+            let fade = 1.0 - 0.28 * Double(tok.age)
+            let r: CGFloat = tok.current ? 10 : 4.5
+            c.fill(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)),
+                   with: .color(Color.white.opacity(0.95 * fade)))
+            let fs: CGFloat = (tok.current ? 34 : 16) * CGFloat(k_scale)
+            let label = Text(s.t(tok.text)).font(verseFont(s.font, fs, tok.current ? .heavy : .bold))
+                .foregroundColor(tok.current ? s.accent : Color.white.opacity(0.75 * fade))
+            c.draw(label, at: CGPoint(x: p.x, y: p.y + (tok.current ? 22 : 14)), anchor: .top)
         }
     }
 }
@@ -810,8 +1129,8 @@ struct LyricsView: View {
     var theme: LyricTheme { LyricTheme(rawValue: themeRaw) ?? .bigWords }
     /// Fill-style themes need smooth progress; the rest only change per word/line.
     var tick: Double {
-        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema]
-        return smooth.contains(theme) ? 0.05 : 0.1
+        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars]
+        return smooth.contains(theme) ? 0.016 : 0.1
     }
     var style: LStyle {
         LStyle(font: fontStyle, scale: scale, align: alignKey == "left" ? .leading : .center,

@@ -48,6 +48,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Weather.shared.start()
         NowPlaying.shared.$track.removeDuplicates().sink { LyricsStore.shared.load($0) }.store(in: &bag)
 
+        // Initialize background managers and hardware monitors
+        ScreenWakeManager.shared.evaluate()
+        _ = LockScreenController.shared
+        _ = TypingBuddy.shared
+        _ = WallpaperManager.shared
+        _ = AirPodsMonitor.shared
+
         panel = makePanel(RootView(), level: .statusBar)
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleLayout),
                                                name: UserDefaults.didChangeNotification, object: nil)

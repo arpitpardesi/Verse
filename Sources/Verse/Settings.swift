@@ -2,15 +2,18 @@ import SwiftUI
 import ServiceManagement
 
 enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, themes, art, glow, island, diary, about
+    case general, themes, art, glow, island, lockScreen, wallpapers, typing, diary, about
     var id: String { rawValue }
     var title: String {
         switch self {
         case .general: return "General"
         case .themes: return "Lyric Themes"
         case .art: return "Album Art"
-        case .glow: return "Edge Glow"
+        case .glow: return "Beat Glow"
         case .island: return "Island"
+        case .lockScreen: return "Lock Screen"
+        case .wallpapers: return "Wallpapers"
+        case .typing: return "Typing Buddy"
         case .diary: return "Diary"
         case .about: return "About"
         }
@@ -22,6 +25,9 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .art: return "photo.on.rectangle.angled"
         case .glow: return "sparkles"
         case .island: return "capsule"
+        case .lockScreen: return "lock.display"
+        case .wallpapers: return "paintbrush.pointed"
+        case .typing: return "keyboard"
         case .diary: return "chart.bar"
         case .about: return "info.circle"
         }
@@ -44,6 +50,9 @@ struct SettingsView: View {
             case .art: ArtTab()
             case .glow: GlowTab()
             case .island: IslandTab()
+            case .lockScreen: LockScreenTab()
+            case .wallpapers: WallpapersTab()
+            case .typing: TypingTab()
             case .diary: DiaryView()
             case .about: AboutTab()
             }
@@ -57,6 +66,7 @@ struct GeneralTab: View {
     @AppStorage(K.glow) private var glow = false
     @AppStorage(K.record) private var record = false
     @AppStorage(K.recordStyle) private var recordStyle = "turntable"
+    @AppStorage("keepScreenAwake") private var keepScreenAwake = true
     @State private var login = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -72,6 +82,10 @@ struct GeneralTab: View {
                 Toggle("Launch at login", isOn: $login)
                     .onChange(of: login) { _, on in
                         if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
+                    }
+                Toggle("Keep screen awake while lyrics play", isOn: $keepScreenAwake)
+                    .onChange(of: keepScreenAwake) { _, _ in
+                        ScreenWakeManager.shared.evaluate()
                     }
             }
             Section("Desktop extras") {
@@ -237,6 +251,152 @@ struct IslandTab: View {
                 TextField("City, e.g. Indore", text: $city)
                 Picker("Units", selection: $unit) { Text("°C").tag("c"); Text("°F").tag("f") }
                     .pickerStyle(.segmented)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+struct LockScreenTab: View {
+    @AppStorage("lockScreenEnabled") private var lockScreenEnabled = true
+    @AppStorage("lockScreenStyle") private var lockScreenStyle = "turntable"
+    @ObservedObject private var faceUnlock = FaceUnlockManager.shared
+    @State private var passwordInput: String = ""
+
+    var body: some View {
+        Form {
+            Section("Lock Screen Player") {
+                Toggle("Show album player on Lock Screen", isOn: $lockScreenEnabled)
+                if lockScreenEnabled {
+                    Picker("Player Style", selection: $lockScreenStyle) {
+                        Text("Turntable (Rotating Vinyl)").tag("turntable")
+                        Text("High-Res Artwork").tag("artwork")
+                        Text("Live Synced Lyrics").tag("lyrics")
+                    }
+                    Text("Appears automatically under your macOS lock screen clock when music is actively playing. Click anywhere on the lock screen widget to cycle between turntable, artwork, and lyrics.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Face Unlock (Beta)") {
+                Toggle("Enable Face Unlock via FaceTime Camera", isOn: $faceUnlock.isEnabled)
+
+                HStack {
+                    Text("Status:")
+                    Spacer()
+                    Text(faceUnlock.statusText)
+                        .foregroundStyle(faceUnlock.isEnabled ? Color.accentColor : Color.secondary)
+                }
+
+                if faceUnlock.isEnabled {
+                    if faceUnlock.hasSavedPassword {
+                        HStack {
+                            Label("Password saved securely in Keychain", systemImage: "checkmark.shield.fill")
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                            Spacer()
+                            Button("Remove", role: .destructive) {
+                                faceUnlock.deletePassword()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Set Mac Password for Automatic Unlock:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            HStack {
+                                SecureField("Enter your macOS user password", text: $passwordInput)
+                                    .textFieldStyle(.roundedBorder)
+                                Button("Save") {
+                                    guard !passwordInput.isEmpty else { return }
+                                    faceUnlock.savePassword(passwordInput)
+                                    passwordInput = ""
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(passwordInput.isEmpty)
+                            }
+                            Text("Your password never leaves this machine. It is stored exclusively in your local encrypted macOS Keychain and used by Vision framework to unlock upon recognizing your face.")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+struct WallpapersTab: View {
+    var body: some View {
+        ScrollView {
+            WallpaperGalleryView()
+                .padding(20)
+        }
+    }
+}
+
+struct TypingTab: View {
+    @ObservedObject private var buddy = TypingBuddy.shared
+    @AppStorage("typingBuddyEnabled") private var enabled = false
+    @AppStorage("typingBuddySoundpack") private var soundpack = "mechanical"
+
+    var body: some View {
+        Form {
+            Section("Michael (Typing Buddy)") {
+                HStack(spacing: 20) {
+                    MichaelKeycapView(size: 72)
+                        .padding(.vertical, 8)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Michael counts your typing speed in real time and animates keystroke bounces with mechanical tactile sound effects.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+
+                        HStack(spacing: 16) {
+                            HStack(spacing: 4) {
+                                Text("Live Speed:")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(buddy.wpm) WPM")
+                                    .font(.caption.bold())
+                            }
+                            HStack(spacing: 4) {
+                                Text("Key Presses:")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(buddy.totalKeystrokes)")
+                                    .font(.caption.bold())
+                            }
+                        }
+                    }
+                }
+
+                Toggle("Enable Keyboard Sound Effects & Typing Monitor", isOn: $enabled)
+                    .onChange(of: enabled) { _, val in
+                        buddy.isEnabled = val
+                    }
+
+                if enabled {
+                    Picker("Soundpack", selection: $soundpack) {
+                        Text("Mechanical Tactile Switch").tag("mechanical")
+                        Text("Vintage Typewriter").tag("typewriter")
+                        Text("Retro Terminal Click").tag("retro")
+                        Text("Silent (Haptic / Animation only)").tag("silent")
+                    }
+                    .onChange(of: soundpack) { _, val in
+                        buddy.soundpack = val
+                    }
+                }
+            }
+
+            Section("Privacy Guarantee") {
+                Label("Verse never logs, records, transmits, or stores typed characters. Keystroke timing is counted ephemerally in-memory solely to compute instantaneous WPM.", systemImage: "hand.raised.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

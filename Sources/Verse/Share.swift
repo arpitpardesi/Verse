@@ -65,7 +65,7 @@ enum Sharing {
         var ls: [String] = []
         if case .synced(let lines) = LyricsStore.shared.state {
             let i = lineIndex(lines, np.position() + LyricsStore.shared.totalOffset)
-            if i >= 0 { ls = (i...min(i + 2, lines.count - 1)).map { lines[$0].text }.filter { !$0.isEmpty } }
+            if i >= 0 && i < lines.count { ls = (i...min(i + 2, lines.count - 1)).map { lines[$0].text }.filter { !$0.isEmpty } }
         }
         if ls.isEmpty { ls = [t.title] }
         let r = ImageRenderer(content: LyricCardView(title: t.title, artist: t.artist, lines: ls, colors: np.colors, art: np.artwork))

@@ -57,6 +57,7 @@ struct IslandView: View {
     @ObservedObject var np = NowPlaying.shared
     @ObservedObject var lyrics = LyricsStore.shared
     @ObservedObject var weather = Weather.shared
+    @ObservedObject var airpods = AirPodsMonitor.shared
     @AppStorage(K.expanded) private var expanded = false
     @AppStorage(K.hover) private var hover = true
     @AppStorage(K.shape) private var shape = "classic"
@@ -67,6 +68,7 @@ struct IslandView: View {
     @AppStorage(K.artDim) private var artDim = 0.45
     @State private var vol = 50.0
     @State private var hoverTask: Task<Void, Never>? = nil
+    @State private var islandTab: Int = 0 // 0: music, 1: weather
 
     var tint: Color { np.colors.first ?? .pink }
     var classic: Bool { shape == "classic" }
@@ -143,6 +145,16 @@ struct IslandView: View {
                 }
             }
             Spacer()
+            if airpods.status.isConnected {
+                HStack(spacing: 3) {
+                    Image(systemName: airpods.status.iconName)
+                    if let pct = airpods.status.batteryPercentage {
+                        Text("\(pct)%")
+                    }
+                }
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.75))
+            }
             EqualizerBars(tint: tint, height: 18)
         }
         .padding(.horizontal, 16).frame(maxHeight: .infinity)
@@ -179,7 +191,16 @@ struct IslandView: View {
             .padding(.leading, 18).frame(maxWidth: .infinity, alignment: .leading)
             Color.clear.frame(width: NotchInfo.width)
             HStack(spacing: 8) {
-                if let t = weather.temp, !city.isEmpty {
+                if airpods.status.isConnected {
+                    HStack(spacing: 3) {
+                        Image(systemName: airpods.status.iconName)
+                        if let pct = airpods.status.batteryPercentage {
+                            Text("\(pct)%")
+                        }
+                    }
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+                } else if let t = weather.temp, !city.isEmpty {
                     Image(systemName: weather.icon).font(.system(size: 11))
                     Text("\(t)°").font(.system(size: 12, weight: .semibold))
                 }
@@ -198,6 +219,24 @@ struct IslandView: View {
     }
 
     var expandedBody: some View {
+        VStack(spacing: 12) {
+            if islandTab == 1 && (weather.temp != nil || !city.isEmpty) {
+                weatherDetailView
+            } else {
+                musicDetailView
+            }
+        }
+        .padding(.horizontal, 22).padding(.top, classic ? 6 : 22).padding(.bottom, 16)
+        .gesture(DragGesture().onEnded { v in
+            if v.translation.width < -35 {
+                withAnimation(.easeInOut(duration: 0.25)) { islandTab = 1 }
+            } else if v.translation.width > 35 {
+                withAnimation(.easeInOut(duration: 0.25)) { islandTab = 0 }
+            }
+        })
+    }
+
+    var musicDetailView: some View {
         VStack(spacing: 12) {
             HStack(spacing: 14) {
                 CoverView(art: np.artwork, size: 84, radius: 16)
@@ -219,9 +258,55 @@ struct IslandView: View {
             }
             SeekBar(tint: tint)
             controls
-            if weather.temp != nil && !city.isEmpty { weatherStrip }
+            if weather.temp != nil && !city.isEmpty {
+                weatherStrip
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.25)) { islandTab = 1 }
+                    }
+            }
         }
-        .padding(.horizontal, 22).padding(.top, classic ? 6 : 22).padding(.bottom, 16)
+    }
+
+    var weatherDetailView: some View {
+        VStack(spacing: 14) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(weather.place.isEmpty ? (city.isEmpty ? "Local Weather" : city) : weather.place)
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Swipe right or click for music")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+                Spacer()
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) { islandTab = 0 }
+                } label: {
+                    Image(systemName: "music.note")
+                        .font(.system(size: 14, weight: .semibold))
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 16) {
+                Image(systemName: weather.icon)
+                    .font(.system(size: 44))
+                    .foregroundStyle(tint)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(weather.temp ?? 0)°")
+                        .font(.system(size: 38, weight: .bold))
+                    Text("↑ \(weather.hi ?? 0)°  ↓ \(weather.lo ?? 0)°")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                Spacer()
+            }
+            .padding(.vertical, 4)
+
+            weatherStrip
+        }
     }
 
     var controls: some View {
