@@ -4,8 +4,9 @@ import SwiftUI
 struct RecordView: View {
     @ObservedObject var np = NowPlaying.shared
     var size: CGFloat
+    var animated = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
             let angle = np.position(at: ctx.date) * 100
             ZStack {
                 ZStack {
@@ -69,24 +70,5 @@ struct RecordWidget: View {
             .foregroundStyle(.white).shadow(color: .black.opacity(0.6), radius: 4)
         }
         .padding(10)
-    }
-}
-
-/// Soft cover-coloured light that travels around the screen edge (decorative, not audio-reactive).
-struct EdgeGlowView: View {
-    @ObservedObject var np = NowPlaying.shared
-    var body: some View {
-        TimelineView(.animation) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate
-            let pulse = np.isPlaying ? 0.65 + 0.35 * sin(t * 4.0) : 0.12
-            let cols = np.colors + [np.colors.first ?? .pink]
-            let grad = AngularGradient(colors: cols, center: .center, angle: .degrees(t * 40))
-            ZStack {
-                RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(grad, lineWidth: 8).blur(radius: 10)
-                RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(grad, lineWidth: 2)
-            }
-            .opacity(pulse)
-        }
-        .allowsHitTesting(false)
     }
 }

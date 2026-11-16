@@ -21,6 +21,7 @@ struct EqualizerBars: View {
 struct SeekBar: View {
     @ObservedObject var np = NowPlaying.shared
     var tint: Color
+    var fg: Color = .white
     @State private var dragging: Double? = nil
 
     var body: some View {
@@ -30,7 +31,7 @@ struct SeekBar: View {
             VStack(spacing: 2) {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(.white.opacity(0.2))
+                        Capsule().fill(fg.opacity(0.2))
                         Capsule().fill(tint).frame(width: max(0, geo.size.width * pos / dur))
                     }
                     .frame(height: 5).offset(y: 5)
@@ -46,7 +47,7 @@ struct SeekBar: View {
                 HStack {
                     Text(fmtTime(pos)); Spacer(); Text(fmtTime(dur))
                 }
-                .font(.system(size: 10).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10).monospacedDigit()).foregroundStyle(fg.opacity(0.6))
             }
         }
     }
@@ -61,7 +62,11 @@ struct IslandView: View {
     @AppStorage(K.shape) private var shape = "classic"
     @AppStorage(K.mode) private var mode = "island"
     @AppStorage(K.city) private var city = ""
+    @AppStorage(K.artIsland) private var artIsland = true
+    @AppStorage(K.artEffect) private var artEffect = "aura"
+    @AppStorage(K.artDim) private var artDim = 0.45
     @State private var vol = 50.0
+    @State private var hoverTask: Task<Void, Never>? = nil
 
     var tint: Color { np.colors.first ?? .pink }
     var classic: Bool { shape == "classic" }
@@ -78,11 +83,27 @@ struct IslandView: View {
         }
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.black)
+        .background {
+            ZStack {
+                Color.black
+                if expanded && artIsland, let a = np.artwork {
+                    ArtBackground(art: a, colors: np.colors, effect: artEffect, dim: max(artDim, 0.55), animated: false)
+                }
+            }
+        }
         .overlay(outline.stroke(LinearGradient(colors: [tint.opacity(np.isPlaying ? 0.55 : 0), .clear],
                                                startPoint: .bottom, endPoint: .top), lineWidth: 1.5))
         .clipShape(outline)
-        .onHover { h in if hover { expanded = h } }
+        .onHover { h in
+            guard hover else { return }
+            // Debounced and applied outside the SwiftUI update pass: resizing the window moves the
+            // pointer in/out of the view, which would otherwise re-enter onHover mid-update.
+            hoverTask?.cancel()
+            hoverTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: h ? 120_000_000 : 220_000_000)
+                if !Task.isCancelled { expanded = h }
+            }
+        }
         .onAppear { vol = np.volume }
         .onChange(of: np.volume) { _, v in vol = v }
     }
@@ -108,6 +129,7 @@ struct IslandView: View {
             }
             .padding(.horizontal, 22).frame(height: 28)
         }
+        .overlay(alignment: .bottom) { ProgressLine(tint: tint).padding(.horizontal, 26).padding(.bottom, 3) }
         .onTapGesture { expanded.toggle() }
     }
 
@@ -124,6 +146,7 @@ struct IslandView: View {
             EqualizerBars(tint: tint, height: 18)
         }
         .padding(.horizontal, 16).frame(maxHeight: .infinity)
+        .overlay(alignment: .bottom) { ProgressLine(tint: tint).padding(.horizontal, 26).padding(.bottom, 3) }
         .onTapGesture { expanded.toggle() }
     }
 
@@ -252,5 +275,24 @@ struct IslandView: View {
         }
         .padding(10)
         .background(Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+/// Thin playback progress line shown under the compact island.
+struct ProgressLine: View {
+    @ObservedObject var np = NowPlaying.shared
+    var tint: Color
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.5)) { ctx in
+            let dur = max(np.track?.duration ?? 1, 1)
+            let frac = min(1, max(0, np.position(at: ctx.date) / dur))
+            GeometryReader { g in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.12))
+                    Capsule().fill(tint.opacity(0.9)).frame(width: g.size.width * CGFloat(frac))
+                }
+            }
+            .frame(height: 2)
+        }
     }
 }

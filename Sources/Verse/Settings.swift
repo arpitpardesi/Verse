@@ -1,16 +1,54 @@
 import SwiftUI
 import ServiceManagement
 
-struct SettingsView: View {
-    var body: some View {
-        TabView {
-            GeneralTab().tabItem { Label("General", systemImage: "gearshape") }
-            LyricsTab().tabItem { Label("Lyrics", systemImage: "text.quote") }
-            IslandTab().tabItem { Label("Island", systemImage: "capsule") }
-            DiaryView().tabItem { Label("Diary", systemImage: "chart.bar") }
-            AboutTab().tabItem { Label("About", systemImage: "info.circle") }
+enum SettingsTab: String, CaseIterable, Identifiable {
+    case general, themes, art, glow, island, diary, about
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .general: return "General"
+        case .themes: return "Lyric Themes"
+        case .art: return "Album Art"
+        case .glow: return "Edge Glow"
+        case .island: return "Island"
+        case .diary: return "Diary"
+        case .about: return "About"
         }
-        .frame(width: 680, height: 580)
+    }
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .themes: return "textformat"
+        case .art: return "photo.on.rectangle.angled"
+        case .glow: return "sparkles"
+        case .island: return "capsule"
+        case .diary: return "chart.bar"
+        case .about: return "info.circle"
+        }
+    }
+}
+
+struct SettingsView: View {
+    @State private var tab: SettingsTab? = .general
+
+    var body: some View {
+        NavigationSplitView {
+            List(SettingsTab.allCases, selection: $tab) { t in
+                Label(t.title, systemImage: t.icon).tag(t)
+            }
+            .navigationSplitViewColumnWidth(min: 170, ideal: 180, max: 200)
+        } detail: {
+            switch tab ?? .general {
+            case .general: GeneralTab()
+            case .themes: ThemesTab()
+            case .art: ArtTab()
+            case .glow: GlowTab()
+            case .island: IslandTab()
+            case .diary: DiaryView()
+            case .about: AboutTab()
+            }
+        }
+        .frame(width: 780, height: 600)
     }
 }
 
@@ -23,18 +61,20 @@ struct GeneralTab: View {
 
     var body: some View {
         Form {
-            Picker("Display", selection: $mode) {
-                Text("Island (notch)").tag("island")
-                Text("Lyrics window").tag("lyrics")
-                Text("Full screen").tag("fullscreen")
-                Text("Desktop lyrics").tag("desktop")
-                Text("Hidden").tag("hidden")
-            }
-            Toggle("Launch at login", isOn: $login)
-                .onChange(of: login) { _, on in
-                    if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
+            Section("Display") {
+                Picker("View", selection: $mode) {
+                    Text("Island (notch)").tag("island")
+                    Text("Lyrics window").tag("lyrics")
+                    Text("Full screen").tag("fullscreen")
+                    Text("Desktop lyrics").tag("desktop")
+                    Text("Hidden").tag("hidden")
                 }
-            Section("Desktop") {
+                Toggle("Launch at login", isOn: $login)
+                    .onChange(of: login) { _, on in
+                        if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
+                    }
+            }
+            Section("Desktop extras") {
                 Toggle("Edge glow (cover-coloured light around the screen)", isOn: $glow)
                 Toggle("Record widget on desktop", isOn: $record)
                 if record {
@@ -65,7 +105,7 @@ struct ThemeTile: View {
     var body: some View {
         ZStack {
             ThemeBackground(theme: theme, setting: "auto", colors: [.purple, .blue, .pink], art: nil, animated: false)
-            SyncedLyrics(theme: theme, lines: Self.sample, index: 1, pos: 6, s: LStyle(scale: 0.3))
+            SyncedLyrics(theme: theme, lines: Self.sample, index: 1, pos: 6, s: LStyle(scale: 0.3), animated: false)
                 .foregroundStyle(.white)
         }
         .frame(height: 96)
@@ -79,7 +119,7 @@ struct ThemeTile: View {
     }
 }
 
-struct LyricsTab: View {
+struct ThemesTab: View {
     @AppStorage(K.theme) private var theme = LyricTheme.bigWord.rawValue
     @AppStorage(K.background) private var bg = "auto"
     @AppStorage(K.font) private var font = "rounded"
@@ -87,9 +127,9 @@ struct LyricsTab: View {
     @AppStorage(K.accent) private var accent = "cover"
     @AppStorage(K.upper) private var upper = false
     @AppStorage(K.scale) private var scale = 1.0
-    @AppStorage("globalOffset") private var globalOffset = 0.0
     @AppStorage(K.scatter) private var scatter = 0.5
     @AppStorage(K.lean) private var lean = 0.5
+    @AppStorage("globalOffset") private var globalOffset = 0.0
 
     var body: some View {
         Form {
@@ -134,6 +174,50 @@ struct LyricsTab: View {
     }
 }
 
+struct ArtTab: View {
+    @ObservedObject var np = NowPlaying.shared
+    @AppStorage(K.artLyrics) private var artOn = true
+    @AppStorage(K.artIsland) private var artIsland = true
+    @AppStorage(K.artEffect) private var effect = "aura"
+    @AppStorage(K.artDim) private var dim = 0.45
+
+    var body: some View {
+        let art = np.artwork ?? placeholderArt(np.colors)
+        Form {
+            Section("Show album art") {
+                Toggle("Behind the lyrics (window and full screen)", isOn: $artOn)
+                Toggle("Behind the expanded island", isOn: $artIsland)
+            }
+            Section("Effect") {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                    ForEach(ArtEffect.allCases) { e in
+                        ZStack {
+                            Color.black
+                            ArtBackground(art: art, colors: np.colors, effect: e.rawValue, dim: dim, animated: false)
+                        }
+                        .frame(height: 90)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(effect == e.rawValue ? Color.accentColor : Color.white.opacity(0.1),
+                                    lineWidth: effect == e.rawValue ? 3 : 1))
+                        .overlay(alignment: .bottomLeading) {
+                            Text(e.title).font(.caption2.bold()).foregroundStyle(.white).padding(7)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture { effect = e.rawValue }
+                    }
+                }
+                .padding(.vertical, 4)
+                HStack { Text("Darkness"); Slider(value: $dim, in: 0.1...0.9) }
+                Text(np.artwork == nil ? "Previews use a sample cover until a song is playing." : "Previews use the current cover.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .disabled(!artOn && !artIsland)
+        }
+        .formStyle(.grouped)
+    }
+}
+
 struct IslandTab: View {
     @AppStorage(K.shape) private var shape = "classic"
     @AppStorage(K.hover) private var hover = true
@@ -142,11 +226,13 @@ struct IslandTab: View {
 
     var body: some View {
         Form {
-            Picker("Shape", selection: $shape) {
-                Text("Notch (attached to top)").tag("classic")
-                Text("Floating pill").tag("floating")
+            Section("Island") {
+                Picker("Shape", selection: $shape) {
+                    Text("Notch (attached to top)").tag("classic")
+                    Text("Floating pill").tag("floating")
+                }
+                Toggle("Expand when the mouse hovers over it", isOn: $hover)
             }
-            Toggle("Expand when the mouse hovers over it", isOn: $hover)
             Section("Weather (free, via Open-Meteo)") {
                 TextField("City, e.g. Indore", text: $city)
                 Picker("Units", selection: $unit) { Text("°C").tag("c"); Text("°F").tag("f") }

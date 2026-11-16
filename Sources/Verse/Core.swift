@@ -7,6 +7,9 @@ enum K {
     static let shape = "islandShape", hover = "expandOnHover", glow = "edgeGlow"
     static let record = "recordWidget", recordStyle = "recordStyle"
     static let scatter = "scatter", lean = "lean"
+    static let artLyrics = "artLyrics", artIsland = "artIsland", artEffect = "artEffect", artDim = "artDim"
+    static let glowStyle = "glowStyle", glowSync = "glowSync", glowColor = "glowColor"
+    static let glowIntensity = "glowIntensity", glowWidth = "glowWidth", glowBPM = "glowBPM", glowSens = "glowSens"
     static let city = "city", unit = "tempUnit", expanded = "islandExpanded"
 }
 
@@ -15,13 +18,22 @@ extension Notification.Name {
 }
 
 enum LyricTheme: String, CaseIterable, Identifiable {
-    case bigWord, jumble, metric, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster
+    case bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster
     var id: String { rawValue }
     var title: String {
         switch self {
         case .bigWord: return "Big Words"
         case .jumble: return "Jumble"
         case .metric: return "Metric"
+        case .wave: return "Wave"
+        case .pop: return "Pop"
+        case .echo: return "Echo"
+        case .cinema: return "Cinema"
+        case .liquid: return "Liquid"
+        case .synthwave: return "Synthwave"
+        case .vinyl: return "Vinyl"
+        case .glitch: return "Glitch"
+        case .orbit: return "Orbit"
         case .bigWords: return "Big Lines"
         case .karaoke: return "Karaoke"
         case .neon: return "Neon"
