@@ -1,6 +1,10 @@
 import SwiftUI
 import AppKit
 
+enum AppInfo {
+    static let version = "2.1"
+}
+
 enum K {
     static let mode = "mode", theme = "theme", background = "background", font = "fontStyle"
     static let align = "align", scale = "scale", upper = "upper", accent = "accent"
