@@ -54,7 +54,7 @@ public final class UpdateManager: NSObject, ObservableObject {
         if let v = Bundle.main.infoDictionary?["CFBundleVersion"] as? String, !v.isEmpty {
             return v
         }
-        return "2.0"
+        return AppInfo.version
     }
 
     private var activeDownloadRelease: GitHubRelease?

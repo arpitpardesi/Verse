@@ -2,6 +2,7 @@
 .build/
 DerivedData/
 *.app
+*.zip
 
 # Xcode user-specific settings
 xcuserdata/

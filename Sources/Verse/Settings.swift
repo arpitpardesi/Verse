@@ -599,7 +599,7 @@ struct AboutTab: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("Verse").font(.system(size: 28, weight: .bold, design: .rounded))
-                            Text("v2.0").font(.system(size: 12, weight: .bold))
+                            Text("v\(UpdateManager.shared.currentVersion)").font(.system(size: 12, weight: .bold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(.tint.opacity(0.15), in: Capsule())
