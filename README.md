@@ -250,23 +250,53 @@ To keep it permanently, drag `Verse.app` to your `/Applications` folder:
 mv Verse.app /Applications/
 ```
 
-### 🚀 Releasing Updates (1-Command Automation)
+### 🚀 Releasing Updates (Automated Methods)
 
-To publish a new Over-The-Air update to all Verse users, run:
+Verse supports two fully automated workflows for shipping Over-The-Air updates:
+
+#### ⚡ Method 1: Local 1-Command Release (`release.sh`)
+Builds, signs, upgrades your local `/Applications/Verse.app`, packages `Verse.zip`, tags git, and pushes to GitHub in one command:
 
 ```bash
-./release.sh <version> ["Release notes"]
+./release.sh <version> ["Optional release notes"]
 
 # Example:
-./release.sh 2.1 "New Picture Disc CD theme, battery optimizations & bug fixes"
+./release.sh 2.1 "Picture Disc CD theme, battery optimizations & bug fixes"
 ```
 
-This single command automatically:
-1. Updates `CFBundleShortVersionString` and `CFBundleVersion`.
-2. Compiles and signs the production `Verse.app`.
-3. Packages `Verse.zip` using Apple `ditto` (preserving code signatures).
-4. Commits, tags `v<version>`, and pushes to GitHub.
-5. Triggers the automated **GitHub Actions CI/CD pipeline** (`.github/workflows/release.yml`) to publish the release with `Verse.zip` attached.
+**What `./release.sh` executes automatically:**
+1. **Version Bumping**: Updates `CFBundleShortVersionString` and `CFBundleVersion` in `build.sh` and `AppInfo.version` in `Sources/Verse/Core.swift`.
+2. **Production Compilation**: Builds release binary (`swift build -c release`) and codesigns `Verse.app`.
+3. **Archive Generation**: Packages `Verse.zip` using Apple `/usr/bin/ditto` (preserving file modes, symlinks, and code signature hashes).
+4. **Local In-Place Upgrade**: If `/Applications/Verse.app` exists on your Mac, it gracefully terminates the old process, replaces the app bundle, strips quarantine attributes, and relaunches the new version.
+5. **Git Version Tagging**: Commits version changes, creates an annotated git tag (e.g. `v2.1`), and pushes both `main` and the tag to GitHub.
+6. **Release Publishing**:
+   - If GitHub CLI (`gh`) is installed: Publishes the GitHub release and attaches `Verse.zip` immediately.
+   - If `gh` is not installed: Pushing the tag automatically triggers **Method 2 (GitHub Actions)** in the cloud.
+
+---
+
+#### ☁️ Method 2: Cloud CI/CD Automation (GitHub Actions)
+Builds, packages, and attaches `Verse.zip` directly on GitHub's cloud runners whenever a version tag is pushed:
+
+```bash
+# Push any version tag to trigger cloud release:
+git tag v2.1
+git push origin v2.1
+```
+
+Or trigger it on the web:
+1. Navigate to your repository on GitHub: **Actions** → **Release Verse** → **Run workflow**.
+2. Enter the version tag (e.g. `v2.1`) and click **Run workflow**.
+
+**What the Cloud Pipeline ([.github/workflows/release.yml](.github/workflows/release.yml)) does:**
+1. Spins up a clean Apple Silicon runner (`macos-14`).
+2. Checks out the repository and compiles the release binary via Swift Package Manager.
+3. Packages `Verse.app` with icons, entitlements, and ad-hoc code signature.
+4. Zips `Verse.app` into `Verse.zip`.
+5. Creates the GitHub Release, attaches `Verse.zip`, and automatically generates release notes from your commit history.
+
+---
 
 ### Building via Swift Package Manager
 

@@ -1,12 +1,22 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
 # Verse Automated Release Script
-# Usage:
-#   ./release.sh <version> ["Optional release notes"]
 #
-# Examples:
-#   ./release.sh 2.1
-#   ./release.sh 2.1 "Major performance optimizations & new Picture Disc CD theme"
+# METHOD 1 (Local 1-Command Release):
+#   Runs locally on your Mac. Bumps version strings across the codebase,
+#   builds production Verse.app, codesigns it, creates Verse.zip, upgrades
+#   /Applications/Verse.app in-place, tags git, and pushes to GitHub.
+#
+#   Usage:
+#     ./release.sh <version> ["Optional release notes"]
+#   Example:
+#     ./release.sh 2.1 "Picture Disc CD theme, battery optimizations & bug fixes"
+#
+# METHOD 2 (Cloud CI/CD via GitHub Actions):
+#   Triggered automatically whenever a tag like 'v2.1' is pushed:
+#     git tag v2.1 && git push origin v2.1
+#   Or run manually from GitHub: Actions -> "Release Verse" -> "Run workflow".
+#   Builds on a macos-14 runner, packages Verse.zip, and publishes the release.
 # -----------------------------------------------------------------------------
 set -e
 
