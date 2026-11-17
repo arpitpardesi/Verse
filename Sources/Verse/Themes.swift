@@ -104,6 +104,315 @@ struct StarField: View {
     }
 }
 
+struct CyberpunkBackground: View {
+    var animated: Bool = true
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                // Deep dark cyber background
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.035, green: 0.04, blue: 0.06)))
+
+                // Grid lines
+                let grid: CGFloat = 36
+                var x: CGFloat = 0
+                while x <= sz.width {
+                    var p = Path(); p.move(to: CGPoint(x: x, y: 0)); p.addLine(to: CGPoint(x: x, y: sz.height))
+                    c.stroke(p, with: .color(Color(red: 0.0, green: 0.9, blue: 1.0).opacity(0.04)), lineWidth: 1)
+                    x += grid
+                }
+                var y: CGFloat = 0
+                while y <= sz.height {
+                    var p = Path(); p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: sz.width, y: y))
+                    c.stroke(p, with: .color(Color(red: 0.0, green: 0.9, blue: 1.0).opacity(0.04)), lineWidth: 1)
+                    y += grid
+                }
+
+                // Laser scanline sweeping vertically
+                let scanY = (t * 80).truncatingRemainder(dividingBy: sz.height)
+                var scanPath = Path()
+                scanPath.move(to: CGPoint(x: 0, y: scanY))
+                scanPath.addLine(to: CGPoint(x: sz.width, y: scanY))
+                c.stroke(scanPath, with: .color(Color(red: 0.0, green: 0.95, blue: 1.0).opacity(0.18)), lineWidth: 1.5)
+
+                // Corner HUD brackets
+                let bLen: CGFloat = 20
+                for pt in [CGPoint(x: 16, y: 16), CGPoint(x: sz.width - 16, y: 16), CGPoint(x: 16, y: sz.height - 16), CGPoint(x: sz.width - 16, y: sz.height - 16)] {
+                    var b = Path()
+                    let dx: CGFloat = pt.x < 100 ? bLen : -bLen
+                    let dy: CGFloat = pt.y < 100 ? bLen : -bLen
+                    b.move(to: CGPoint(x: pt.x, y: pt.y + dy))
+                    b.addLine(to: pt)
+                    b.addLine(to: CGPoint(x: pt.x + dx, y: pt.y))
+                    c.stroke(b, with: .color(Color(red: 1.0, green: 0.0, blue: 0.4).opacity(0.5)), lineWidth: 1.5)
+                }
+            }
+        }
+    }
+}
+
+struct QuantumBackground: View {
+    var tint: Color = .purple
+    var secondary: Color = .blue
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.02, green: 0.025, blue: 0.05)))
+
+                let center = CGPoint(x: sz.width / 2, y: sz.height / 2)
+                let baseR = min(sz.width, sz.height) * 0.38
+
+                // Rotating quantum orbital probability rings
+                for i in 0..<3 {
+                    let angle = t * (0.3 + Double(i) * 0.15) * (i % 2 == 0 ? 1 : -1)
+                    let scaleX = 1.0 - Double(i) * 0.22
+                    let scaleY = 0.35 + Double(i) * 0.18
+
+                    c.drawLayer { l in
+                        l.translateBy(x: center.x, y: center.y)
+                        l.rotate(by: .radians(angle + Double(i) * .pi / 3))
+                        let rect = CGRect(x: -baseR * scaleX, y: -baseR * scaleY, width: baseR * 2 * scaleX, height: baseR * 2 * scaleY)
+                        let ringColor = (i == 0 ? tint : (i == 1 ? secondary : Color.cyan)).opacity(0.25)
+                        l.stroke(Path(ellipseIn: rect), with: .color(ringColor), lineWidth: 1.2)
+
+                        // Subatomic particle node revolving on ring
+                        let pAngle = t * 1.8 + Double(i) * 2.0
+                        let px = cos(pAngle) * baseR * scaleX
+                        let py = sin(pAngle) * baseR * scaleY
+                        l.fill(Path(ellipseIn: CGRect(x: px - 3, y: py - 3, width: 6, height: 6)), with: .color(Color.white.opacity(0.85)))
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct PrismBackground: View {
+    var tint: Color = .purple
+    var secondary: Color = .blue
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.04, green: 0.04, blue: 0.05)))
+
+                // Spectral light dispersion caustics
+                let center = CGPoint(x: sz.width * 0.5, y: sz.height * 0.5)
+                let rays = 8
+                for i in 0..<rays {
+                    let a = t * 0.08 + Double(i) * (.pi * 2 / Double(rays))
+                    let hue = Double(i) / Double(rays)
+                    let col = Color(hue: hue, saturation: 0.8, brightness: 0.9).opacity(0.08)
+                    let r: CGFloat = max(sz.width, sz.height) * 0.85
+                    var p = Path()
+                    p.move(to: center)
+                    p.addLine(to: CGPoint(x: center.x + cos(a - 0.12) * r, y: center.y + sin(a - 0.12) * r))
+                    p.addLine(to: CGPoint(x: center.x + cos(a + 0.12) * r, y: center.y + sin(a + 0.12) * r))
+                    p.closeSubpath()
+                    c.fill(p, with: .color(col))
+                }
+            }
+        }
+    }
+}
+
+struct AuroraBackground: View {
+    var c0: Color
+    var c1: Color
+    var c2: Color
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.02, green: 0.03, blue: 0.06)))
+
+                let auroraCols = [
+                    Color(red: 0.1, green: 0.9, blue: 0.6), // Emerald
+                    Color(red: 0.2, green: 0.6, blue: 1.0), // Cyan-Blue
+                    Color(red: 0.7, green: 0.3, blue: 0.9)  // Violet
+                ]
+
+                for j in 0..<3 {
+                    let jd = Double(j)
+                    var path = Path()
+                    path.move(to: CGPoint(x: 0, y: sz.height))
+                    var x: CGFloat = 0
+                    while x <= sz.width + 16 {
+                        let ph = Double(x) / 180 + t * (0.35 + jd * 0.18) + jd * 1.5
+                        let wave = sin(ph) * 0.45 + cos(ph * 0.6) * 0.35
+                        let y = sz.height * (0.32 + CGFloat(jd) * 0.16) + CGFloat(wave) * 60
+                        path.addLine(to: CGPoint(x: x, y: y))
+                        x += 16
+                    }
+                    path.addLine(to: CGPoint(x: sz.width, y: sz.height))
+                    path.closeSubpath()
+
+                    let col = auroraCols[j % auroraCols.count]
+                    c.fill(path, with: .linearGradient(
+                        Gradient(colors: [col.opacity(0.22), col.opacity(0.04), .clear]),
+                        startPoint: CGPoint(x: 0, y: sz.height * 0.25),
+                        endPoint: CGPoint(x: 0, y: sz.height)
+                    ))
+                }
+            }
+        }
+    }
+}
+
+struct MatrixBackground: View {
+    var animated: Bool = true
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 25, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.01, green: 0.02, blue: 0.015)))
+                let cols = 26
+                let colW = sz.width / CGFloat(cols)
+                let glyphs = ["ｦ", "ｱ", "ｳ", "ｴ", "ｵ", "ｶ", "ｷ", "ｹ", "ｺ", "ｻ", "ｼ", "ｽ", "ｾ", "ｿ", "ﾀ", "ﾂ", "ﾃ", "ﾅ", "ﾆ", "ﾇ", "ﾈ", "ﾊ", "ﾋ", "ﾎ", "ﾏ", "ﾐ", "ﾑ", "ﾒ", "ﾓ", "ﾔ", "ﾕ", "ﾗ", "ﾘ", "ﾜ", "0", "1", "2", "3", "7", "8", "9", "X", "Z"]
+                for i in 0..<cols {
+                    let speed = 65.0 + Double((i * 17) % 55)
+                    let dropY = (t * speed + Double(i * 97)).truncatingRemainder(dividingBy: Double(sz.height + 200)) - 100
+                    let x = CGFloat(i) * colW + colW * 0.5
+                    for g in 0..<12 {
+                        let gy = dropY - Double(g * 18)
+                        if gy > 0 && gy < Double(sz.height) {
+                            let charIdx = (i * 7 + g + Int(t * 3)) % glyphs.count
+                            let char = glyphs[charIdx]
+                            let op = max(0.05, 1.0 - Double(g) / 12.0)
+                            let isHead = (g == 0)
+                            let font = Font.system(size: 11, weight: isHead ? .bold : .regular, design: .monospaced)
+                            let col = isHead ? Color.white : Color(red: 0.0, green: 0.95, blue: 0.35).opacity(op * 0.8)
+                            c.draw(Text(char).font(font).foregroundStyle(col), at: CGPoint(x: x, y: gy))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct RadarBackground: View {
+    var animated: Bool = true
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.02, green: 0.04, blue: 0.03)))
+                let center = CGPoint(x: sz.width / 2, y: sz.height / 2)
+                let maxR = min(sz.width, sz.height) * 0.46
+                let green = Color(red: 0.1, green: 0.9, blue: 0.4)
+
+                // Concentric range rings
+                for i in 1...4 {
+                    let r = maxR * CGFloat(i) / 4.0
+                    c.stroke(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
+                             with: .color(green.opacity(0.15)), lineWidth: 1)
+                }
+
+                // Crosshairs
+                var cross = Path()
+                cross.move(to: CGPoint(x: center.x - maxR, y: center.y))
+                cross.addLine(to: CGPoint(x: center.x + maxR, y: center.y))
+                cross.move(to: CGPoint(x: center.x, y: center.y - maxR))
+                cross.addLine(to: CGPoint(x: center.x, y: center.y + maxR))
+                c.stroke(cross, with: .color(green.opacity(0.18)), lineWidth: 0.8)
+
+                // Rotating sweep beam
+                let sweepA = (t * 1.6).truncatingRemainder(dividingBy: .pi * 2)
+                var sweepPath = Path()
+                sweepPath.move(to: center)
+                sweepPath.addLine(to: CGPoint(x: center.x + cos(sweepA) * maxR, y: center.y + sin(sweepA) * maxR))
+                c.stroke(sweepPath, with: .color(green.opacity(0.85)), lineWidth: 2)
+
+                // Sweeping phosphor cone
+                var cone = Path()
+                cone.move(to: center)
+                cone.addArc(center: center, radius: maxR, startAngle: .radians(sweepA - 0.5), endAngle: .radians(sweepA), clockwise: false)
+                cone.closeSubpath()
+                c.fill(cone, with: .radialGradient(
+                    Gradient(colors: [green.opacity(0.2), .clear]),
+                    center: center, startRadius: 0, endRadius: maxR
+                ))
+            }
+        }
+    }
+}
+
+struct SpotlightBackground: View {
+    var tint: Color = .purple
+    var animated: Bool = true
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.03, green: 0.03, blue: 0.04)))
+                let sway = sin(t * 0.4) * sz.width * 0.12
+                let topOrigin = CGPoint(x: sz.width * 0.5, y: -20)
+                let bottomCenter = CGPoint(x: sz.width * 0.5 + sway, y: sz.height * 0.82)
+                let bottomW: CGFloat = sz.width * 0.48
+
+                // Volumetric light cone
+                var cone = Path()
+                cone.move(to: topOrigin)
+                cone.addLine(to: CGPoint(x: bottomCenter.x - bottomW * 0.5, y: bottomCenter.y))
+                cone.addLine(to: CGPoint(x: bottomCenter.x + bottomW * 0.5, y: bottomCenter.y))
+                cone.closeSubpath()
+
+                c.fill(cone, with: .linearGradient(
+                    Gradient(colors: [Color.white.opacity(0.16), tint.opacity(0.12), .clear]),
+                    startPoint: topOrigin, endPoint: bottomCenter
+                ))
+
+                // Floor light oval
+                let floorR = CGRect(x: bottomCenter.x - bottomW * 0.5, y: bottomCenter.y - 25, width: bottomW, height: 50)
+                c.fill(Path(ellipseIn: floorR), with: .radialGradient(
+                    Gradient(colors: [Color.white.opacity(0.25), tint.opacity(0.15), .clear]),
+                    center: bottomCenter, startRadius: 0, endRadius: bottomW * 0.5
+                ))
+            }
+        }
+    }
+}
+
+struct DiscBackground: View {
+    var animated: Bool = true
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            Canvas { c, sz in
+                c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.04, green: 0.04, blue: 0.05)))
+                let center = CGPoint(x: sz.width / 2, y: sz.height / 2)
+                let maxR = min(sz.width, sz.height) * 0.45
+
+                // Radial rainbow prismatic dispersion
+                let rays = 12
+                for i in 0..<rays {
+                    let a = t * 0.25 + Double(i) * (.pi * 2 / Double(rays))
+                    let hue = (Double(i) / Double(rays) + t * 0.05).truncatingRemainder(dividingBy: 1.0)
+                    let col = Color(hue: hue, saturation: 0.75, brightness: 0.9).opacity(0.10)
+                    var wedge = Path()
+                    wedge.move(to: center)
+                    wedge.addLine(to: CGPoint(x: center.x + cos(a) * maxR, y: center.y + sin(a) * maxR))
+                    wedge.addLine(to: CGPoint(x: center.x + cos(a + 0.2) * maxR, y: center.y + sin(a + 0.2) * maxR))
+                    wedge.closeSubpath()
+                    c.fill(wedge, with: .color(col))
+                }
+
+                // Center hub
+                c.stroke(Path(ellipseIn: CGRect(x: center.x - maxR, y: center.y - maxR, width: maxR * 2, height: maxR * 2)),
+                         with: .color(Color.white.opacity(0.15)), lineWidth: 1)
+            }
+        }
+    }
+}
+
 struct ThemeBackground: View {
     let theme: LyricTheme
     let setting: String
@@ -152,6 +461,37 @@ struct ThemeBackground: View {
         case .typewriter: Color(white: 0.08)
         case .poster: ZStack { Color.black; c0.opacity(0.3) }
         case .stars: StarField(tint: c0, secondary: c1, animated: animated)
+        case .cyberpunk: CyberpunkBackground(animated: animated)
+        case .quantum: QuantumBackground(tint: c0, secondary: c1, animated: animated)
+        case .whisper:
+            ZStack {
+                Color(red: 0.05, green: 0.05, blue: 0.06)
+                RadialGradient(colors: [c0.opacity(0.12), .clear], center: .center, startRadius: 0, endRadius: 500)
+            }
+        case .zen:
+            ZStack {
+                Color(red: 0.06, green: 0.065, blue: 0.075)
+                LinearGradient(colors: [Color.white.opacity(0.02), Color.clear], startPoint: .top, endPoint: .bottom)
+            }
+        case .prism: PrismBackground(tint: c0, secondary: c1, animated: animated)
+        case .aurora: AuroraBackground(c0: c0, c1: c1, c2: c2, animated: animated)
+        case .cassette:
+            LinearGradient(colors: [Color(red: 0.08, green: 0.07, blue: 0.06), Color(red: 0.03, green: 0.03, blue: 0.03)], startPoint: .top, endPoint: .bottom)
+        case .spotlight:
+            SpotlightBackground(tint: c0, animated: animated)
+        case .magazine:
+            ZStack {
+                Color(red: 0.06, green: 0.06, blue: 0.065)
+                LinearGradient(colors: [Color.white.opacity(0.04), Color.clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+            }
+        case .ipod:
+            LinearGradient(colors: [Color(white: 0.16), Color(white: 0.08)], startPoint: .top, endPoint: .bottom)
+        case .matrix:
+            MatrixBackground(animated: animated)
+        case .radar:
+            RadarBackground(animated: animated)
+        case .disc:
+            DiscBackground(animated: animated)
         case .aura where !animated:
             ZStack {
                 Color.black
@@ -272,17 +612,49 @@ struct SyncedLyrics: View {
             }
 
         case .neon:
-            VStack(spacing: 16) {
-                Text(text(index - 1)).font(s.f(20, .medium)).opacity(0.25)
-                Text(cur).font(s.f(44, .heavy))
-                    .foregroundStyle(s.accent)
-                    .shadow(color: s.accent, radius: 6)
-                    .shadow(color: s.c(1), radius: 22)
-                    .id(index).transition(.opacity)
-                Text(text(index + 1)).font(s.f(20, .medium)).opacity(0.25)
+            VStack(spacing: 20) {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.red).frame(width: 8, height: 8)
+                        .shadow(color: .red, radius: 4)
+                    Text("LIVE ON AIR").font(.system(size: 10, weight: .black, design: .monospaced))
+                        .foregroundStyle(Color.red)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(Color.black.opacity(0.6), in: Capsule())
+                .overlay(Capsule().stroke(Color.red.opacity(0.4), lineWidth: 1))
+
+                Text(text(index - 1))
+                    .font(s.f(18, .medium))
+                    .foregroundStyle(s.accent.opacity(0.2))
+                    .lineLimit(1)
+
+                ZStack {
+                    Text(cur)
+                        .font(s.f(46, .heavy))
+                        .foregroundStyle(s.accent)
+                        .blur(radius: 20)
+                    Text(cur)
+                        .font(s.f(46, .heavy))
+                        .foregroundStyle(s.accent)
+                        .blur(radius: 8)
+                    Text(cur)
+                        .font(s.f(46, .heavy))
+                        .foregroundStyle(Color.white)
+                        .shadow(color: s.accent, radius: 2)
+                }
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.35)
+                .padding(.horizontal, 36)
+                .id(index)
+                .transition(.opacity)
+
+                Text(text(index + 1))
+                    .font(s.f(18, .medium))
+                    .foregroundStyle(s.accent.opacity(0.2))
+                    .lineLimit(1)
             }
-            .multilineTextAlignment(.center).minimumScaleFactor(0.4).padding(40)
-            .animation(.easeInOut(duration: 0.3), value: index)
+            .padding(40)
+            .animation(.easeInOut(duration: 0.25), value: index)
 
         case .terminal:
             VStack(spacing: 10) {
@@ -309,12 +681,26 @@ struct SyncedLyrics: View {
             .animation(.easeInOut(duration: 0.5), value: index)
 
         case .minimal:
-            VStack(spacing: 6) {
-                Text(cur).font(s.f(26, .semibold))
-                Text(text(index + 1)).font(s.f(16, .regular)).opacity(0.5)
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(-2...2, id: \.self) { d in
+                    let i = index + d
+                    let isCur = d == 0
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(isCur ? s.accent : Color.clear)
+                            .frame(width: 6, height: 6)
+                        Text(text(i))
+                            .font(s.f(isCur ? 30 : 20, isCur ? .bold : .medium))
+                            .foregroundStyle(isCur ? Color.white : Color.white.opacity(max(0.12, 0.45 - Double(abs(d)) * 0.15)))
+                            .blur(radius: isCur ? 0 : CGFloat(abs(d)) * 1.2)
+                            .lineLimit(2)
+                    }
+                    .offset(x: isCur ? 10 : 0)
+                }
             }
-            .multilineTextAlignment(.center).padding(40)
-            .animation(.easeInOut(duration: 0.25), value: index)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 48)
+            .animation(.spring(response: 0.38, dampingFraction: 0.78), value: index)
 
         case .lens:
             VStack(spacing: 14) {
@@ -682,6 +1068,734 @@ struct SyncedLyrics: View {
                 .animation(.spring(duration: 0.55), value: wi)
             }
             .id(index)
+
+        case .cyberpunk:
+            VStack(spacing: 16) {
+                HStack(spacing: 8) {
+                    Text("[ SYS // 0\(max(index + 1, 1)) ]").font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 1.0))
+                    Rectangle().fill(Color(red: 0.0, green: 0.95, blue: 1.0).opacity(0.4)).frame(height: 1)
+                    Text("\(fmtTime(pos))").font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color(red: 1.0, green: 0.0, blue: 0.4))
+                }
+                .frame(maxWidth: 520)
+
+                Text(text(index - 1))
+                    .font(verseFont(s.font, 16 * CGFloat(s.scale), .medium))
+                    .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 1.0).opacity(0.35))
+                    .lineLimit(1)
+
+                HStack(spacing: 12) {
+                    Text("«")
+                        .font(.system(size: 32, weight: .black, design: .monospaced))
+                        .foregroundStyle(Color(red: 1.0, green: 0.0, blue: 0.4))
+
+                    ZStack {
+                        Text(cur)
+                            .font(s.f(44, .black))
+                            .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 1.0).opacity(0.7))
+                            .offset(x: -2, y: 1)
+                            .blur(radius: 2)
+
+                        Text(cur)
+                            .font(s.f(44, .black))
+                            .foregroundStyle(Color(red: 1.0, green: 0.0, blue: 0.4).opacity(0.7))
+                            .offset(x: 2, y: -1)
+                            .blur(radius: 2)
+
+                        Text(cur)
+                            .font(s.f(44, .black))
+                            .foregroundStyle(Color.white)
+                    }
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.35)
+
+                    Text("»")
+                        .font(.system(size: 32, weight: .black, design: .monospaced))
+                        .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 1.0))
+                }
+                .id(index)
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
+
+                GeometryReader { bg in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.1)).frame(height: 3)
+                        Capsule()
+                            .fill(LinearGradient(colors: [Color(red: 0.0, green: 0.95, blue: 1.0), Color(red: 1.0, green: 0.0, blue: 0.4)], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: bg.size.width * CGFloat(progress), height: 3)
+                            .shadow(color: Color(red: 0.0, green: 0.95, blue: 1.0), radius: 6)
+                    }
+                }
+                .frame(height: 3)
+                .frame(maxWidth: 420)
+
+                Text(text(index + 1))
+                    .font(verseFont(s.font, 16 * CGFloat(s.scale), .medium))
+                    .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 1.0).opacity(0.35))
+                    .lineLimit(1)
+            }
+            .padding(40)
+            .animation(.easeInOut(duration: 0.25), value: index)
+
+        case .quantum:
+            VStack(spacing: 20) {
+                HStack {
+                    Text("ψ [QUANTUM STATE 0\(max(index + 1, 1))]")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundStyle(s.accent.opacity(0.7))
+                    Spacer()
+                    Text("ENERGY: \(String(format: "%.2f", 4.2 + sin(pos * 2) * 1.5)) eV")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.cyan.opacity(0.6))
+                }
+                .frame(maxWidth: 480)
+
+                ZStack {
+                    Circle()
+                        .stroke(LinearGradient(colors: [s.accent.opacity(0.4), .clear, Color.cyan.opacity(0.3)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5)
+                        .frame(width: 380, height: 160)
+                        .rotationEffect(.degrees(pos * 18))
+
+                    Text(cur)
+                        .font(s.f(44, .heavy))
+                        .foregroundStyle(Color.white)
+                        .shadow(color: s.accent.opacity(0.85), radius: 18)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.35)
+                        .padding(.horizontal, 36)
+                        .id(index)
+                        .transition(.scale(scale: 0.92).combined(with: .opacity))
+                }
+
+                Text(text(index + 1))
+                    .font(s.f(17, .medium))
+                    .foregroundStyle(s.accent.opacity(0.3))
+                    .lineLimit(1)
+            }
+            .padding(40)
+            .animation(.easeInOut(duration: 0.3), value: index)
+
+        case .whisper:
+            VStack(spacing: 20) {
+                ForEach(-2...2, id: \.self) { offset in
+                    let i = index + offset
+                    let isCurrent = offset == 0
+                    let dist = abs(offset)
+                    Text(text(i))
+                        .font(s.f(isCurrent ? 36 : 22, isCurrent ? .semibold : .regular))
+                        .foregroundStyle(isCurrent ? Color.white : Color.white.opacity(0.3 - Double(dist) * 0.1))
+                        .blur(radius: isCurrent ? 0 : CGFloat(dist) * 3.5)
+                        .scaleEffect(isCurrent ? 1.0 : (1.0 - CGFloat(dist) * 0.05))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
+                }
+            }
+            .padding(40)
+            .animation(.easeInOut(duration: 0.4), value: index)
+
+        case .zen:
+            HStack(spacing: 36) {
+                VStack(spacing: 0) {
+                    Circle().fill(s.accent.opacity(0.7)).frame(width: 6, height: 6)
+                    Rectangle().fill(LinearGradient(colors: [s.accent.opacity(0.7), .clear], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 1.5, height: 180)
+                }
+
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(text(index - 1))
+                        .font(s.f(16, .light))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                        .lineLimit(1)
+
+                    Text(cur)
+                        .font(s.f(38, .light))
+                        .foregroundStyle(Color(white: 0.96))
+                        .lineSpacing(6)
+                        .minimumScaleFactor(0.4)
+                        .id(index)
+                        .transition(.opacity)
+
+                    Text(text(index + 1))
+                        .font(s.f(16, .light))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(50)
+            .animation(.easeInOut(duration: 0.45), value: index)
+
+        case .prism:
+            let beatPulse = CGFloat(sin(pos * 4) * 0.5 + 0.5)
+            let split: CGFloat = 3.0 + 2.5 * beatPulse
+            VStack(spacing: 16) {
+                Text(text(index - 1))
+                    .font(s.f(17, .semibold))
+                    .foregroundStyle(Color.white.opacity(0.25))
+                    .lineLimit(1)
+
+                ZStack {
+                    Text(cur)
+                        .font(s.f(50, .heavy))
+                        .foregroundStyle(Color.red)
+                        .offset(x: -split, y: 0)
+                        .blendMode(.screen)
+
+                    Text(cur)
+                        .font(s.f(50, .heavy))
+                        .foregroundStyle(Color.cyan)
+                        .offset(x: split, y: 0)
+                        .blendMode(.screen)
+
+                    Text(cur)
+                        .font(s.f(50, .heavy))
+                        .foregroundStyle(Color.white)
+                }
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.35)
+                .id(index)
+                .transition(.scale(scale: 0.94).combined(with: .opacity))
+
+                Text(text(index + 1))
+                    .font(s.f(17, .semibold))
+                    .foregroundStyle(Color.white.opacity(0.25))
+                    .lineLimit(1)
+            }
+            .padding(40)
+            .animation(.easeInOut(duration: 0.25), value: index)
+
+        case .aurora:
+            VStack(spacing: 18) {
+                Text(text(index - 1))
+                    .font(s.f(17, .medium).italic())
+                    .foregroundStyle(Color(red: 0.2, green: 0.9, blue: 0.7).opacity(0.3))
+                    .lineLimit(1)
+
+                Text(cur)
+                    .font(s.f(46, .bold).italic())
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color(red: 0.2, green: 1.0, blue: 0.7), Color(red: 0.3, green: 0.7, blue: 1.0), Color(red: 0.8, green: 0.4, blue: 1.0)],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: Color(red: 0.2, green: 0.9, blue: 0.7).opacity(0.6), radius: 16)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.35)
+                    .id(index)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+
+                Text(text(index + 1))
+                    .font(s.f(17, .medium).italic())
+                    .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 1.0).opacity(0.3))
+                    .lineLimit(1)
+            }
+            .padding(40)
+            .animation(.easeInOut(duration: 0.35), value: index)
+
+        case .cassette:
+            CassetteTapeView(title: cur, artist: text(index + 1), progress: progress, accent: s.accent, animated: animated)
+                .id(index)
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
+
+        case .spotlight:
+            VStack(spacing: 16) {
+                Text(text(index - 1))
+                    .font(s.f(16, .medium))
+                    .foregroundStyle(Color.white.opacity(0.25))
+                    .lineLimit(1)
+
+                Text(cur)
+                    .font(s.f(46, .bold))
+                    .foregroundStyle(Color.white)
+                    .shadow(color: s.accent.opacity(0.9), radius: 24)
+                    .shadow(color: .white.opacity(0.8), radius: 6)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.35)
+                    .id(index)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+
+                Text(text(index + 1))
+                    .font(s.f(16, .medium))
+                    .foregroundStyle(Color.white.opacity(0.25))
+                    .lineLimit(1)
+            }
+            .padding(40)
+            .animation(.spring(response: 0.35, dampingFraction: 0.75), value: index)
+
+        case .magazine:
+            EditorialMagazineView(cur: cur, prev: text(index - 1), next: text(index + 1), lineNum: index + 1, total: lines.count, accent: s.accent, s: s)
+                .id(index)
+                .transition(.opacity)
+
+        case .ipod:
+            IPodClassicView(cur: cur, next: text(index + 1), pos: pos, dur: lineDur, progress: progress, s: s)
+                .id(index)
+                .transition(.opacity)
+
+        case .matrix:
+            VStack(spacing: 16) {
+                Text(text(index - 1))
+                    .font(.system(size: 15, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color(red: 0.0, green: 0.9, blue: 0.3).opacity(0.3))
+                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    Text(">").font(.system(size: 28, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Color(red: 0.0, green: 1.0, blue: 0.4))
+                    Text(cur)
+                        .font(.system(size: 38 * CGFloat(s.scale), weight: .bold, design: .monospaced))
+                        .foregroundStyle(Color.white)
+                        .shadow(color: Color(red: 0.0, green: 1.0, blue: 0.35), radius: 12)
+                        .multilineTextAlignment(.leading)
+                        .minimumScaleFactor(0.35)
+                }
+                .id(index)
+                .transition(.opacity)
+
+                Text(text(index + 1))
+                    .font(.system(size: 15, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color(red: 0.0, green: 0.9, blue: 0.3).opacity(0.3))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(48)
+            .animation(.easeInOut(duration: 0.25), value: index)
+
+        case .radar:
+            VStack(spacing: 14) {
+                HStack(spacing: 8) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(Color(red: 0.1, green: 0.9, blue: 0.4))
+                    Text("SONAR TRACKING // BEARING \(Int((pos * 45).truncatingRemainder(dividingBy: 360)))°")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Color(red: 0.1, green: 0.9, blue: 0.4).opacity(0.75))
+                }
+
+                Text(cur)
+                    .font(.system(size: 40 * CGFloat(s.scale), weight: .heavy, design: .monospaced))
+                    .foregroundStyle(Color.white)
+                    .shadow(color: Color(red: 0.1, green: 0.9, blue: 0.4).opacity(0.9), radius: 14)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.35)
+                    .id(index)
+                    .transition(.scale(scale: 0.92).combined(with: .opacity))
+
+                Text(text(index + 1))
+                    .font(.system(size: 15, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color(red: 0.1, green: 0.9, blue: 0.4).opacity(0.35))
+                    .lineLimit(1)
+            }
+            .padding(44)
+            .animation(.easeInOut(duration: 0.3), value: index)
+
+        case .disc:
+            CompactDiscView(cur: cur, next: text(index + 1), index: index + 1, total: lines.count, progress: progress, accent: s.accent, animated: animated, s: s)
+                .id(index)
+                .transition(.scale(scale: 0.94).combined(with: .opacity))
+        }
+    }
+}
+
+struct CassetteTapeView: View {
+    let title: String
+    let artist: String
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            let spin = t * 120.0
+
+            VStack(spacing: 16) {
+                // Cassette Body
+                ZStack {
+                    // Outer shell
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.08)], startPoint: .top, endPoint: .bottom))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1.5))
+                        .frame(width: 440, height: 260)
+                        .shadow(color: .black.opacity(0.6), radius: 24, y: 12)
+
+                    // 4 Corner screws
+                    ForEach([(-195, -105), (195, -105), (-195, 105), (195, 105)], id: \.0) { ox, oy in
+                        Circle().fill(Color(white: 0.28)).frame(width: 10, height: 10)
+                            .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 1))
+                            .offset(x: CGFloat(ox), y: CGFloat(oy))
+                    }
+
+                    VStack(spacing: 10) {
+                        // Mixtape Sticker Label
+                        VStack(spacing: 4) {
+                            HStack {
+                                Text("SIDE A").font(.system(size: 10, weight: .black, design: .monospaced))
+                                    .foregroundStyle(Color.black.opacity(0.6))
+                                Spacer()
+                                Text("C-90 HIGH BIAS").font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(Color.black.opacity(0.5))
+                            }
+                            Text(title)
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(Color(white: 0.1))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .frame(width: 380)
+                        .background(Color(white: 0.92), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                        // Center Window with 2 sprockets
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Color.black.opacity(0.85))
+                                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Color.white.opacity(0.15), lineWidth: 1))
+                                .frame(width: 340, height: 110)
+
+                            // Magnetic tape fill (left spool shrinks, right spool grows)
+                            HStack(spacing: 40) {
+                                // Left Reel
+                                ZStack {
+                                    Circle().fill(Color(red: 0.35, green: 0.18, blue: 0.12))
+                                        .frame(width: CGFloat(70 - 25 * progress), height: CGFloat(70 - 25 * progress))
+                                    Circle().fill(Color.white).frame(width: 36, height: 36)
+                                    ForEach(0..<6) { i in
+                                        Rectangle().fill(Color.black).frame(width: 4, height: 10)
+                                            .offset(y: -14)
+                                            .rotationEffect(.degrees(Double(i) * 60))
+                                    }
+                                }
+                                .rotationEffect(.degrees(spin))
+
+                                // Tape window counter
+                                VStack(spacing: 2) {
+                                    Text("TAPE")
+                                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(Color.white.opacity(0.4))
+                                    Text(String(format: "%03d", Int(progress * 100)))
+                                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(accent)
+                                }
+                                .frame(width: 50)
+
+                                // Right Reel
+                                ZStack {
+                                    Circle().fill(Color(red: 0.35, green: 0.18, blue: 0.12))
+                                        .frame(width: CGFloat(45 + 25 * progress), height: CGFloat(45 + 25 * progress))
+                                    Circle().fill(Color.white).frame(width: 36, height: 36)
+                                    ForEach(0..<6) { i in
+                                        Rectangle().fill(Color.black).frame(width: 4, height: 10)
+                                            .offset(y: -14)
+                                            .rotationEffect(.degrees(Double(i) * 60))
+                                    }
+                                }
+                                .rotationEffect(.degrees(spin))
+                            }
+                        }
+                    }
+                }
+
+                // Subtitle / Next Line under cassette
+                if !artist.isEmpty {
+                    Text(artist)
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(Color.white.opacity(0.45))
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+}
+
+struct EditorialMagazineView: View {
+    let cur: String
+    let prev: String
+    let next: String
+    let lineNum: Int
+    let total: Int
+    let accent: Color
+    let s: LStyle
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            // Magazine Header
+            HStack {
+                Text("THE LYRIC REVIEW").font(.system(size: 13, weight: .black, design: .serif)).tracking(3)
+                Spacer()
+                Text("VOL. \(max(1, lineNum)) // \(total)").font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundStyle(accent)
+            }
+            .padding(.bottom, 6)
+            .overlay(Rectangle().fill(Color.white.opacity(0.2)).frame(height: 1), alignment: .bottom)
+
+            // Two-column editorial spread
+            HStack(alignment: .top, spacing: 32) {
+                // Left Column: Big active quote with Drop Cap
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top, spacing: 8) {
+                        if let firstChar = cur.first {
+                            Text(String(firstChar))
+                                .font(.system(size: 64, weight: .bold, design: .serif))
+                                .foregroundStyle(accent)
+                                .lineLimit(1)
+                            Text(String(cur.dropFirst()))
+                                .font(s.f(36, .bold))
+                                .foregroundStyle(Color.white)
+                                .minimumScaleFactor(0.4)
+                        } else {
+                            Text(cur).font(s.f(36, .bold))
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Vertical Column Divider
+                Rectangle().fill(Color.white.opacity(0.12)).frame(width: 1, height: 160)
+
+                // Right Column: Annotations and Next line
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("COMING UP:").font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Color.white.opacity(0.4))
+                    Text(next.isEmpty ? "—" : next)
+                        .font(s.f(18, .medium))
+                        .foregroundStyle(Color.white.opacity(0.55))
+                        .lineLimit(3)
+
+                    Spacer()
+
+                    // Editorial barcode badge
+                    HStack(spacing: 2) {
+                        ForEach(0..<18) { k in
+                            Rectangle().fill(Color.white.opacity(k % 3 == 0 ? 0.6 : 0.2))
+                                .frame(width: CGFloat(k % 2 == 0 ? 3 : 1.5), height: 20)
+                        }
+                    }
+                }
+                .frame(width: 160, alignment: .leading)
+            }
+            .frame(maxWidth: 620)
+        }
+        .padding(44)
+    }
+}
+
+struct IPodClassicView: View {
+    let cur: String
+    let next: String
+    let pos: Double
+    let dur: Double
+    let progress: Double
+    let s: LStyle
+
+    var body: some View {
+        VStack(spacing: 16) {
+            // iPod 2-inch LCD Screen
+            VStack(spacing: 0) {
+                // Header Bar (Apple classic blue gradient)
+                HStack {
+                    Image(systemName: "play.fill").font(.system(size: 9))
+                    Spacer()
+                    Text("Now Playing").font(.system(size: 12, weight: .bold, design: .default))
+                    Spacer()
+                    Image(systemName: "battery.75").font(.system(size: 12))
+                }
+                .foregroundStyle(Color.black.opacity(0.85))
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(LinearGradient(colors: [Color(red: 0.85, green: 0.90, blue: 0.98), Color(red: 0.65, green: 0.75, blue: 0.90)], startPoint: .top, endPoint: .bottom))
+                .overlay(Rectangle().fill(Color.black.opacity(0.2)).frame(height: 1), alignment: .bottom)
+
+                // Screen body
+                VStack(spacing: 12) {
+                    Spacer()
+                    Text(cur)
+                        .font(.system(size: 26 * CGFloat(s.scale), weight: .bold, design: .default))
+                        .foregroundStyle(Color.black.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.4)
+                        .padding(.horizontal, 20)
+                    if !next.isEmpty {
+                        Text(next)
+                            .font(.system(size: 13, weight: .regular, design: .default))
+                            .foregroundStyle(Color.black.opacity(0.45))
+                            .lineLimit(1)
+                    }
+                    Spacer()
+
+                    // Diamond Scrubber Progress Bar
+                    VStack(spacing: 4) {
+                        GeometryReader { g in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 3).fill(Color.black.opacity(0.15))
+                                RoundedRectangle(cornerRadius: 3).fill(Color(red: 0.2, green: 0.5, blue: 0.9))
+                                    .frame(width: g.size.width * CGFloat(progress))
+                                // Diamond head
+                                Image(systemName: "suit.diamond.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(Color(red: 0.1, green: 0.4, blue: 0.85))
+                                    .offset(x: max(0, g.size.width * CGFloat(progress) - 5))
+                            }
+                        }
+                        .frame(height: 6)
+
+                        HStack {
+                            Text(fmtTime(pos))
+                            Spacer()
+                            Text("-\(fmtTime(max(0, dur - pos)))")
+                        }
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color.black.opacity(0.6))
+                    }
+                    .padding(.horizontal, 16).padding(.bottom, 12)
+                }
+                .background(Color(red: 0.92, green: 0.95, blue: 0.98))
+            }
+            .frame(width: 360, height: 230)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.3), lineWidth: 2))
+            .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
+
+            // Click Wheel hint
+            ZStack {
+                Circle().fill(Color(white: 0.22)).frame(width: 110, height: 110)
+                    .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                Circle().fill(Color(white: 0.3)).frame(width: 44, height: 44)
+                Text("MENU").font(.system(size: 8, weight: .bold, design: .default)).foregroundStyle(Color.white.opacity(0.6)).offset(y: -36)
+                Image(systemName: "forward.end.alt.fill").font(.system(size: 8)).foregroundStyle(Color.white.opacity(0.6)).offset(x: 36)
+                Image(systemName: "backward.end.alt.fill").font(.system(size: 8)).foregroundStyle(Color.white.opacity(0.6)).offset(x: -36)
+                Image(systemName: "playpause.fill").font(.system(size: 8)).foregroundStyle(Color.white.opacity(0.6)).offset(y: 36)
+            }
+        }
+    }
+}
+
+struct CompactDiscView: View {
+    @ObservedObject var np = NowPlaying.shared
+    let cur: String
+    let next: String
+    let index: Int
+    let total: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+            let spin = animated && np.isPlaying ? np.position(at: ctx.date) * 80.0 : (animated ? ctx.date.timeIntervalSinceReferenceDate * 25.0 : 0.0)
+
+            HStack(spacing: 36) {
+                // CD Disc with Album Art Picture Disc
+                ZStack {
+                    // Outer mirror aluminum bevel
+                    Circle()
+                        .fill(RadialGradient(colors: [Color(white: 0.94), Color(white: 0.74), Color(white: 0.88)], center: .center, startRadius: 90, endRadius: 105))
+                        .frame(width: 210, height: 210)
+                        .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1.2))
+                        .shadow(color: .black.opacity(0.45), radius: 20, y: 10)
+
+                    // Album Artwork Face (Picture Disc)
+                    Group {
+                        if let art = np.artwork {
+                            Image(nsImage: art)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 196, height: 196)
+                                .clipShape(Circle())
+                        } else {
+                            Circle()
+                                .fill(LinearGradient(colors: [accent, np.colors.count > 1 ? np.colors[1] : .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 196, height: 196)
+                        }
+                    }
+
+                    // Iridescent Spectral Hologram Reflection Overlay (Rainbow diffraction)
+                    Circle()
+                        .fill(AngularGradient(colors: [
+                            .clear,
+                            Color(red: 1.0, green: 0.2, blue: 0.4).opacity(0.24),
+                            Color(red: 1.0, green: 0.8, blue: 0.2).opacity(0.28),
+                            Color(red: 0.2, green: 0.9, blue: 0.6).opacity(0.25),
+                            Color(red: 0.2, green: 0.6, blue: 1.0).opacity(0.28),
+                            Color(red: 0.8, green: 0.3, blue: 0.9).opacity(0.24),
+                            .clear,
+                            Color(red: 1.0, green: 0.3, blue: 0.5).opacity(0.22),
+                            Color(red: 0.3, green: 0.8, blue: 0.9).opacity(0.25),
+                            .clear
+                        ], center: .center))
+                        .frame(width: 196, height: 196)
+                        .blendMode(.screen)
+
+                    // Dual Shimmer Highlights (optical light reflections)
+                    Circle()
+                        .fill(AngularGradient(colors: [
+                            .clear,
+                            Color.white.opacity(0.35),
+                            .clear,
+                            Color.white.opacity(0.35),
+                            .clear
+                        ], center: .center))
+                        .frame(width: 196, height: 196)
+                        .blendMode(.overlay)
+
+                    // Concentric Micro-Track Grooves
+                    ForEach([180, 150, 120, 95], id: \.self) { r in
+                        Circle()
+                            .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
+                            .frame(width: CGFloat(r), height: CGFloat(r))
+                    }
+
+                    // Inner Clear Stacking Ring / Mirror Hub (standard transparent plastic ring)
+                    Circle()
+                        .fill(RadialGradient(
+                            colors: [Color.black.opacity(0.45), Color.white.opacity(0.18), Color.black.opacity(0.35)],
+                            center: .center, startRadius: 15, endRadius: 36
+                        ))
+                        .frame(width: 72, height: 72)
+                        .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1))
+
+                    // Inner Clear Mirror Band
+                    Circle()
+                        .fill(Color.black.opacity(0.7))
+                        .frame(width: 44, height: 44)
+                        .overlay(Circle().stroke(Color.white.opacity(0.35), lineWidth: 0.8))
+
+                    // Center Spindle Hole (standard 15mm CD center hole)
+                    Circle()
+                        .fill(Color(white: 0.08))
+                        .frame(width: 24, height: 24)
+                        .overlay(Circle().stroke(Color.white.opacity(0.65), lineWidth: 1.2))
+                }
+                .rotationEffect(.degrees(spin))
+
+                // Track and Lyric Info
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 8) {
+                        Text("COMPACT DISC DIGITAL AUDIO")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.4))
+                        Spacer()
+                        Text("TRK \(index)/\(total)")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundStyle(accent)
+                    }
+
+                    Text(cur)
+                        .font(s.f(38, .heavy))
+                        .foregroundStyle(Color.white)
+                        .shadow(color: accent.opacity(0.7), radius: 10)
+                        .minimumScaleFactor(0.4)
+
+                    if !next.isEmpty {
+                        Text(next)
+                            .font(s.f(16, .medium))
+                            .foregroundStyle(Color.white.opacity(0.4))
+                            .lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(40)
         }
     }
 }
@@ -791,7 +1905,8 @@ struct Constellation: View, Equatable {
                 let curLine = lines[index]
                 let nextTime = index + 1 < lines.count ? lines[index + 1].time : curLine.time + 4.5
                 let lineDur = max(0.6, nextTime - curLine.time)
-                let elapsed = max(0, pos - curLine.time)
+                let realPos = animated ? (NowPlaying.shared.position(at: ctx.date) + LyricsStore.shared.totalOffset + 0.25) : pos
+                let elapsed = max(0, realPos - curLine.time)
                 let lineProg = min(1.0, max(0.0, elapsed / (lineDur * 0.95)))
 
                 let curWords = wordsOf(curLine.text)
@@ -1129,7 +2244,7 @@ struct LyricsView: View {
     var theme: LyricTheme { LyricTheme(rawValue: themeRaw) ?? .bigWords }
     /// Fill-style themes need smooth progress; the rest only change per word/line.
     var tick: Double {
-        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars]
+        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars, .cyberpunk, .quantum, .prism, .aurora, .cassette, .spotlight, .magazine, .ipod, .matrix, .radar, .disc]
         return smooth.contains(theme) ? 0.016 : 0.1
     }
     var style: LStyle {

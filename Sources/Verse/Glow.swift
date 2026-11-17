@@ -383,7 +383,22 @@ struct GlowTab: View {
                     Text("Orange").tag("orange"); Text("White").tag("white")
                 }
                 HStack { Text("Intensity"); Slider(value: $intensity, in: 0.2...1) }
-                HStack { Text("Thickness"); Slider(value: $width, in: 2...16) }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Thickness")
+                        Slider(value: $width, in: 1...30, step: 1)
+                        Text("\(Int(width)) pt").monospacedDigit().frame(width: 48)
+                    }
+                    HStack(spacing: 8) {
+                        Text("Presets:").font(.caption).foregroundStyle(.secondary)
+                        Button("Hairline (2 pt)") { width = 2 }
+                        Button("Normal (6 pt)") { width = 6 }
+                        Button("Bold (12 pt)") { width = 12 }
+                        Button("Massive (24 pt)") { width = 24 }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
             Section("Beat sync") {
                 Picker("Sync to", selection: $sync) {

@@ -10,7 +10,8 @@ struct MenuView: View {
     @AppStorage(K.artIsland) private var artIsland = true
     @AppStorage(K.artEffect) private var artEffect = "aura"
     @AppStorage(K.glow) private var glow = false
-    @AppStorage(K.glowStyle) private var glowStyle = "border"
+    @AppStorage(K.glowStyle) private var glowStyle = "rim"
+    @AppStorage(K.glowWidth) private var glowWidth = 6.0
     @AppStorage(K.glowSync) private var glowSync = "audio"
     @AppStorage(K.record) private var record = false
 
@@ -84,9 +85,19 @@ struct MenuView: View {
                 if glow {
                     row("Glow style", "paintbrush") {
                         Picker("", selection: $glowStyle) {
-                            Text("Border glow").tag("border"); Text("Ripple").tag("ripple"); Text("Spectrum bars").tag("spectrum")
-                            Text("Corner flares").tag("corners"); Text("Aurora").tag("aurora")
+                            Text("Beat Glow Rim").tag("rim")
+                            Text("Border glow").tag("border")
+                            Text("Ripple").tag("ripple")
+                            Text("Spectrum bars").tag("spectrum")
+                            Text("Corner flares").tag("corners")
+                            Text("Aurora").tag("aurora")
                         }
+                    }
+                    HStack {
+                        Label("Thickness", systemImage: "lineweight").font(.system(size: 12))
+                        Spacer()
+                        Slider(value: $glowWidth, in: 1...30, step: 1).frame(width: 100)
+                        Text("\(Int(glowWidth)) pt").monospacedDigit().font(.system(size: 11)).foregroundStyle(.secondary).frame(width: 34, alignment: .trailing)
                     }
                     row("Beat sync", "metronome") {
                         Picker("", selection: $glowSync) {

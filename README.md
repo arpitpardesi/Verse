@@ -1,6 +1,6 @@
 # Verse 🎵
 
-> **Free, real-time synchronized lyrics and Dynamic Island notch player for macOS 14+**
+> **Free, real-time synchronized lyrics, Dynamic Island notch player, Lock Screen hub, and audio visualizer for macOS 14+**
 
 [![macOS 14.0+](https://img.shields.io/badge/macOS-14.0%2B%20Sonoma%20%2F%20Sequoia-black?style=flat&logo=apple)](https://www.apple.com/macos/)
 [![Swift 5.9](https://img.shields.io/badge/Swift-5.9%2B-F05138?style=flat&logo=swift&logoColor=white)](https://swift.org)
@@ -9,7 +9,7 @@
 [![Lyrics by LRCLIB](https://img.shields.io/badge/Lyrics-LRCLIB-blueviolet.svg)](https://lrclib.net)
 [![Privacy 100% Local](https://img.shields.io/badge/Privacy-100%25%20Local-brightgreen.svg)](#privacy--security)
 
-**Verse** transforms your MacBook’s display notch into an interactive Dynamic Island music hub with synchronized, word-by-word karaoke-style lyrics, audio-reactive desktop light effects, vinyl turntable widgets, Bluetooth latency compensation, and a 100% private listening diary.
+**Verse** transforms your Mac into an immersive music experience with 35 synchronized lyric themes, a hardware-aligned Dynamic Island notch player, interactive Lock Screen widgets, audio-reactive ambient edge lighting, fine art wallpapers, tactile typing feedback, and a 100% offline listening diary.
 
 Built natively in pure Swift & SwiftUI with **zero external dependencies**, **zero configuration**, and **zero accounts or API keys required**.
 
@@ -44,37 +44,90 @@ Built natively in pure Swift & SwiftUI with **zero external dependencies**, **ze
 
 ---
 
-### 🎤 22 Cinematic Lyric Themes
-Verse includes 22 typography and animation themes that dynamically adapt to the color palette extracted from your currently playing album artwork:
+### 🎤 35 Distinctive Cinematic Lyric Themes
+Every theme in Verse is designed with its own unique layout, motion identity, graphical embellishments, and dynamic color adaptation:
 
 | Theme | Aesthetic & Behavior |
 |---|---|
-| **Big Words** | Ultra-bold typography focusing on the active line with ambient artwork glow. |
-| **Big Lines** | Full-width high-contrast lyrics with smooth multi-line vertical transitions. |
-| **Karaoke** | Real-time gradient fill that sweeps left-to-right across words as they are sung. |
+| **Cassette** 📼 | Vintage 1980s Walkman cassette tape with dual spinning geared sprockets, moving magnetic tape, mixtape label, and tape counter. |
+| **Spotlight** 🔦 | Moody theatrical overhead spotlight cutting through atmospheric haze with floor light pool, cast shadow, and illuminated lyrics. |
+| **Magazine** 📰 | High-fashion editorial spread with oversized volume index, two-column grid, giant drop-cap initials, and barcode accents. |
+| **Classic Pod** 📱 | Nostalgic 2000s iPod Classic with backlit LCD display, classic Chicago typography, diamond playback scrubber, and click wheel. |
+| **Matrix** 🟢 | Digital rain canvas with streaming phosphor green katakana/hex glyphs and prompt cursor where lyric lines materialize. |
+| **Radar** 📡 | Tactical aviation/sonar circular scope with 360° sweeping phosphor beam line, range rings, and words detected as sonar blips. |
+| **CD Disc** 💿 | Picture-disc compact disc with live spinning album artwork, shimmering rainbow diffraction reflections, data tracks, and clear spindle hub. |
+| **Stars** ✨ | Fluid celestial constellation where lyrics ignite as glowing star beacons connected by traveling photon energy beams (with sub-frame sync). |
+| **Neon** 💡 | Retro neon sign on dark acrylic mount with luminous tube glow, white-hot filament core, and live on-air indicator. |
+| **Minimal** 🫧 | Continuous vertical flowing lyric stream (Apple Music style) with active line sharp and surrounding lines gently blurred. |
+| **Quantum** ⚛️ | High-energy 3D tilted electron orbital rings with revolving subatomic particles and live quantum telemetry. |
+| **Zen** 🎋 | Japanese minimalist sumi-e ink wash divider with light calm typography, water-drop accent, and serene pacing. |
+| **Cinema** 🎬 | Anamorphic 2.39:1 widescreen bars with running live audio waveform oscilloscope, film timecode, and cinematic subtitle italics. |
+| **Synthwave** 🕹️ | Neon Outrun 1984 wireframe horizon grid speeding into distance with glowing segmented vector sunset. |
+| **Vinyl** 💽 | High-fidelity spinning vinyl record turntable with micro-grooves, light gleams, tone-arm, and side lyrics. |
+| **Karaoke** 🎤 | Real-time gradient fill that sweeps left-to-right across words as they are sung. |
+| **Cyberpunk** ⚡ | Neon HUD layout with futuristic system telemetry, bracket framing, and dual-tone chromatic glow. |
+| **Whisper** 🌫️ | Multi-line focal depth where inactive verses blur gently into the atmospheric background. |
+| **Prism** 🌈 | Rhythmic chromatic aberration splitting into RGB channels on active lines. |
+| **Aurora** 🌌 | Shimmering multi-hue gradient typography inspired by the northern lights. |
 | **Wave** 🌊 | Words bob on organic liquid waves, illuminating on the beat with buoyant physics. |
 | **Pop** 🎈 | Word-by-word bouncy speech bubble bursts that explode rhythmically with the lyrics. |
 | **Echo** 🔊 | Concentric acoustic depth ripples reverberating behind the active lyric line. |
-| **Cinema** 🎬 | Letterboxed 2.39:1 widescreen view with progress timestamps and subtitle typography. |
 | **Liquid** 💧 | Shifting multi-color iridescent fluid sweeping across bold letters. |
-| **Synthwave** 🕹️ | Neon-drenched 80s wireframe grid with glowing sunset and perspective lines. |
-| **Vinyl** 💽 | Real-time spinning vinyl turntable disc floating alongside the active verse. |
-| **Glitch** ⚡ | Cyberpunk RGB color splitting and chromatic aberration on lyric changes. |
+| **Glitch** 👾 | Cyberpunk RGB color splitting and scanline chromatic aberration on lyric changes. |
 | **Orbit** 🪐 | Words revolve around a 3D elliptical planetary trajectory, bringing the sung word forward. |
-| **Aura** | Living ambient backdrop with three fluid, blurred color orbs orbiting to the music. |
-| **Stars** | Twinkling particle starfield where sung words illuminate as celestial stars. |
-| **Terminal** | Retro monospaced command-line hacker aesthetic. |
-| **Neon** | Vibrant glowing neon-tube outlines pulsing with track energy. |
-| **Metric** | High-tech audio telemetry HUD displaying elapsed/remaining time and line durations. |
-| **Jumble** | Playful typographic layout with randomized angles and dynamic scattering. |
-| **Minimal** | Clean, distraction-free typography on ultra-thin frosted glass. |
-| **Lens** | Spotlight gradient highlighting the current lyric line while dimming surroundings. |
-| **Typewriter** | Tactile mechanical typewriter aesthetic with monospaced character pacing. |
-| **Poster** | Bold editorial Swiss-style graphic design layout. |
+| **Aura** 🔮 | Living ambient backdrop with three fluid, blurred color orbs orbiting to the music. |
+| **Terminal** 💻 | Retro monospaced command-line hacker aesthetic with live cursor blocks. |
+| **Metric** ⏱️ | High-tech audio telemetry HUD displaying elapsed/remaining time, W/S tempo, and line durations. |
+| **Jumble** 🎲 | Playful typographic layout with randomized angles and dynamic scattering. |
+| **Big Words** 💥 | Kinetic word-by-word bold poster with dynamic rotation and scale pops. |
+| **Big Lines** 📜 | Full-width high-contrast lyrics with smooth multi-line vertical transitions. |
+| **Lens** 🔍 | Spotlight gradient highlighting the current lyric line while dimming surroundings. |
+| **Typewriter** ⌨️ | Tactile mechanical typewriter aesthetic with monospaced character pacing. |
+| **Poster** 📐 | Bold editorial Swiss-style graphic design layout. |
 
 ---
 
-### ⚡ Audio-Reactive Edge Glow
+### 🔒 macOS Lock Screen Music Player & Face Unlock
+- **Lock Screen Music Widget**: Displays an interactive music player directly beneath the macOS lock screen clock whenever audio is playing:
+  - **3 Display Modes**: Rotating **Vinyl Turntable**, **High-Res Artwork**, or **Live Synced Lyrics**.
+  - **Full Playback Controls**: Previous, Play/Pause with glowing button, and Next.
+  - **Interactive Mode Switching**: Click anywhere on the lock screen widget to cycle between turntable, artwork, and lyrics.
+  - **Desktop Preview**: Test and adjust your lock screen look anytime with the in-app preview toggle in Settings.
+- **Face Unlock (Beta)**:
+  - Uses the built-in FaceTime HD camera and Apple Vision framework (`VNDetectFaceRectanglesRequest`) to detect the user's face at the lock screen.
+  - Automatically unlocks your Mac using locally encrypted Keychain credentials.
+  - **100% Local Security**: Password never leaves your machine; camera frames are processed ephemerally in-memory and immediately discarded.
+
+---
+
+### ⌨️ Michael (Typing Buddy)
+- **Real-Time WPM Speedometer**: Calculates typing speed (Words Per Minute) in real time and tracks lifetime keystrokes.
+- **Interactive Bouncing Keycap**: 3D keycap icon that physically animates on every keypress.
+- **4 Tactile Soundpacks**:
+  - **Mechanical Tactile Switch**: Satisfying mechanical keyboard clacks.
+  - **Vintage Typewriter**: Classic metal hammer strikes.
+  - **Retro Terminal Click**: Nostalgic 80s computer clicks.
+  - **Silent**: Visual and haptic feedback without sound.
+- **Privacy Guarantee**: Verse only records ephemeral timestamps to compute speed—it **never** reads, logs, or stores typed characters.
+
+---
+
+### 🖼️ Curated Fine Art Wallpapers & Palette Generator
+- **Masterpiece Gallery**: Built-in collection of 8 fine art masterpieces adapted for modern displays:
+  - *The Starry Night* (Vincent van Gogh, 1889)
+  - *Water Lilies* (Claude Monet, 1916)
+  - *The Great Wave off Kanagawa* (Katsushika Hokusai, 1831)
+  - *Wanderer above the Sea of Fog* (Caspar David Friedrich, 1818)
+  - *The Kiss* (Gustav Klimt, 1908)
+  - *Girl with a Pearl Earring* (Johannes Vermeer, 1665)
+  - *Impression, Sunrise* (Claude Monet, 1872)
+  - *Composition VIII* (Wassily Kandinsky, 1923)
+- **Auto-Cycle Timer**: Automatically rotates your wallpaper **Hourly**, **Daily**, or on track change.
+- **Album Palette Wallpaper**: 1-click generation of abstract blurred wallpapers matching the currently playing album's dominant colors.
+
+---
+
+### ⚡ Audio-Reactive Beat Glow
 Turn your entire display into an ambient music visualizer:
 - **Live System Audio Analysis**: Powered by Apple's `ScreenCaptureKit` (`AudioReactor`), Verse analyzes output audio in real time to detect low-end bass kicks and energy peaks without using your microphone.
 - **5 Glow Styles**:
@@ -83,17 +136,13 @@ Turn your entire display into an ambient music visualizer:
   - **Spectrum**: Equalizer bars dancing along display edges.
   - **Corner Flares**: Explosive light bursts from the four corners on heavy bass drops.
   - **Aurora**: Flowing northern-lights ambient curtains.
-- **4 Beat Sync Modes**:
-  - **Live Audio**: Real-time DSP bass beat detection.
-  - **Tempo (BPM)**: Rhythmic pulsing synced to track tempo.
-  - **Lyric Lines**: Pulses on each new lyric line transition.
-  - **Breathing**: Gentle ambient swell.
+- **4 Beat Sync Modes**: **Live Audio** (DSP bass beat detection), **Tempo (BPM)**, **Lyric Lines**, or **Breathing (Smooth)**.
 - **Fine-Tuned Customization**: Adjust intensity, border width, audio sensitivity, and color mode (Album Palette, Rainbow, or custom accents).
 
 ---
 
 ### 🎨 Atmospheric Album Art Backgrounds
-Add rich depth behind lyrics and inside the Island with 6 selectable effects:
+Add rich visual depth behind lyrics and inside the Island with 6 selectable effects:
 - **Aura**: Orbiting, saturated color blur with fluid radial gradients.
 - **Soft Blur**: Heavy 60px atmospheric blur.
 - **Full Art**: Crisp artwork with subtle gradient vignette.
@@ -149,6 +198,7 @@ Switch modes at any time from the menu bar extra or Settings:
 ### ⏱️ Latency & Precision Sync Control
 - **Per-Song Sync Nudge**: Adjust timing by `±0.1s` or `±1.0s`. Verse automatically remembers offsets per song.
 - **Global Bluetooth Delay**: Compensate for audio latency introduced by Bluetooth headphones (e.g., AirPods, Sony WH-1000XM, Bose) with a global delay slider (-5.0s to +5.0s).
+- **CoreAudio AirPods Monitor**: Real-time detection of connected AirPods and Beats devices.
 - **Smart Duration Fallback**: Verse queries [LRCLIB](https://lrclib.net/) and matches synced lyrics closest to the track duration, preventing drift between radio edits and extended album cuts.
 
 ---
@@ -205,51 +255,42 @@ swift build -c release
 
 ---
 
-## 🔐 Permissions & First Launch
+## 🔐 Permissions & Privacy
 
-### 1. Automation (Required)
-On the first launch, macOS will ask permission to allow **Verse** to control **Spotify** or **Music**:
-> **"Verse" wants access to control "Music" / "Spotify".**
-
-1. Click **Allow** / **OK**.
-2. If you accidentally clicked "Don't Allow", enable it under:
-   - **System Settings** → **Privacy & Security** → **Automation** → Check the box under **Verse** for **Spotify** and **Music**.
+### 1. Automation (Required for Music Control)
+On first launch, macOS will request permission to allow Verse to read currently playing track information:
+- **System Settings** → **Privacy & Security** → **Automation** → Allow **Verse** for **Spotify** and **Music**.
 
 ### 2. Screen & System Audio Recording (Optional for Audio-Reactive Glow)
-To sync Edge Glow with live music output, Verse uses Apple's `ScreenCaptureKit` loopback audio capture.
-- Enable under: **System Settings** → **Privacy & Security** → **Screen & System Audio Recording** → Allow **Verse**.
-> *Note: Verse only captures system audio output (never the microphone or screen contents), converts sample buffers directly to instantaneous energy levels in memory, and immediately discards them. Nothing is ever saved or transmitted.*
+To sync Edge Glow with live music output, Verse uses Apple's `ScreenCaptureKit` loopback audio capture:
+- **System Settings** → **Privacy & Security** → **Screen & System Audio Recording** → Allow **Verse**.
+> *Note: Verse only captures system audio output (never the microphone or screen contents), converts sample buffers directly to instantaneous energy levels in memory, and immediately discards them.*
+
+### 3. Camera & Keychain (Optional for Face Unlock Beta)
+- Requires FaceTime camera access to detect your face on the lock screen.
+- User password is stored exclusively in your local encrypted macOS Keychain.
 
 ---
 
-## 🧭 How to Use Verse
+## 🧭 Settings Navigation (10 Tabs)
 
-### Quick Actions via Menu Bar
-Click the Verse icon in your menu bar (`music.note.list`) to:
-- See the current playing track with album art, equalizer, seek bar, and transport controls
-- Switch display modes (**Island**, **Lyrics window**, **Full screen**, **Desktop**, **Hidden**)
-- Change the lyric theme with live preview
-- Toggle album art background effects, Edge Glow styles, and Desktop Record widget
-- Fine-tune sync timing (`-1s`, `-0.1s`, `+0.1s`, `+1s`, `Reset`)
-- **Copy lyric card** to clipboard & Desktop
-- **Set wallpaper from album colours**
-- Open **Settings…** or **Quit**
-
-### Settings Navigation
-Preferences are organized into a modern macOS `NavigationSplitView` with 7 dedicated tabs:
-- **General**: Display mode picker, launch at login toggle, edge glow toggle, desktop vinyl widget styles, and quick tools.
-- **Lyric Themes**: Visual grid gallery of all 22 themes with live interactive preview tiles, typography settings (font style, text size, alignment, uppercase, scatter, lean, accent color), and global latency delay.
-- **Album Art**: Background album art settings with 6 visual effects (Aura, Soft blur, Full art, Ken Burns, Duotone, Split), dimming slider, and separate toggles for Lyrics window and Island.
-- **Edge Glow**: Style picker (Border, Ripple, Spectrum, Corner flares, Aurora), beat sync modes, color scheme, intensity, width, audio sensitivity, and beat tester.
-- **Island**: Shape selector (Classic Notch vs Floating Pill), hover expansion toggle, and Open-Meteo weather city configuration (°C / °F).
-- **Diary**: Personal scrobbling metrics (today, past week, all time) and top artists/songs charts.
-- **About**: Credits, source information, and API attribution.
+Preferences are organized into a modern macOS `NavigationSplitView` with 10 dedicated sections:
+1. **General**: Display mode picker, launch at login toggle, edge glow toggle, desktop vinyl widget styles, and quick tools.
+2. **Lyric Themes**: Visual grid gallery of all 28 themes with live interactive preview tiles, typography settings, and global latency delay.
+3. **Album Art**: Background album art settings with 6 visual effects (Aura, Soft blur, Full art, Ken Burns, Duotone, Split), dimming slider, and separate toggles.
+4. **Beat Glow**: Glow styles (Border, Ripple, Spectrum, Corner flares, Aurora), beat sync modes, color scheme, intensity, width, audio sensitivity, and beat tester.
+5. **Island**: Shape selector (Classic Notch vs Floating Pill), hover expansion toggle, and Open-Meteo weather city configuration (°C / °F).
+6. **Lock Screen**: Show album player on lock screen, style picker (Turntable, Artwork, Lyrics), desktop preview toggle, and Face Unlock (Beta).
+7. **Wallpapers**: Curated fine art wallpaper gallery with auto-cycle timer (Hourly, Daily, on track change).
+8. **Typing Buddy**: Michael the Typing Buddy with real-time WPM speedometer, keystroke counter, and 4 mechanical soundpacks.
+9. **Diary**: Personal scrobbling metrics (today, past week, all time) and top artists/songs charts.
+10. **About**: Credits, source information, and API attribution.
 
 ---
 
 ## 🛠️ Architecture & Tech Stack
 
-Verse is built with performance and battery efficiency as primary design goals:
+Verse is built with performance, security, and battery efficiency as primary design goals:
 
 ```
 Sources/Verse/
@@ -258,13 +299,19 @@ Sources/Verse/
 ├── NowPlaying.swift     # Spotify & Apple Music AppleScript polling engine
 ├── Lyrics.swift         # LRCLIB API client, LRC parser & sync store
 ├── LyricsChrome.swift   # Hover-activated floating control bars for lyrics
-├── Themes.swift         # 22 typography lyric themes & theme rendering container
+├── Themes.swift         # 28 typography lyric themes & theme rendering container
 ├── Art.swift            # Atmospheric background album art effects (Aura, Ken Burns, etc.)
 ├── Island.swift         # Dynamic Island (Notch & Floating), seeker & media controls
 ├── Glow.swift           # ScreenCaptureKit live audio reactor & edge glow renderer
 ├── Record.swift         # Vinyl record desktop widget (Turntable, Sleeve, Aura)
+├── LockScreen.swift     # macOS Lock Screen player & live preview controller
+├── FaceUnlock.swift     # FaceTime HD camera & Vision framework face unlock manager
+├── Wallpapers.swift     # Fine art masterpiece wallpaper gallery & scheduler
+├── TypingBuddy.swift    # Michael typing speed (WPM) monitor & mechanical sound engine
+├── AirPods.swift        # CoreAudio AirPods & Beats headphone device detection
+├── ScreenWake.swift     # Display wake & sleep event coordinator
 ├── MenuView.swift       # Menu bar extra popover with player & toggles
-├── Settings.swift       # NavigationSplitView settings tabs & theme galleries
+├── Settings.swift       # 10-tab NavigationSplitView preferences & live theme previews
 ├── Weather.swift        # Open-Meteo geocoding & forecast client
 ├── Diary.swift          # Local JSON scrobbler & listening analytics
 └── Share.swift          # 1080x1080 lyric card & desktop wallpaper generator
@@ -273,8 +320,7 @@ Sources/Verse/
 - **AppKit + SwiftUI Hybrid**: Utilizes `NSPanel` with `.statusBar` and `.nonactivatingPanel` styles, configured with `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]` so the island and widgets persist across all macOS virtual spaces without stealing window focus.
 - **Hardware Notch Alignment**: `NotchInfo` inspects `NSScreen.main?.safeAreaInsets.top` and `auxiliaryTopLeftArea` / `auxiliaryTopRightArea` to determine physical notch margins dynamically, ensuring zero UI clipping across 14" and 16" MacBook Pro models or MacBook Airs.
 - **Dominant Color Extraction**: Custom RGB/HSV color quantization algorithm in `Core.swift` that downsamples artwork bitmaps to 24×24 pixels, calculates saturation-weighted hue distribution, and extracts up to 3 dominant theme colors.
-- **Low-Overhead Live Audio**: `AudioReactor` runs on a dedicated background dispatch queue using `ScreenCaptureKit` to sample audio frames with zero UI thread contention.
-- **Zero Third-Party Packages**: Everything uses native Apple frameworks (`AppKit`, `SwiftUI`, `ScreenCaptureKit`, `Combine`, `ServiceManagement`, `Foundation`).
+- **Zero Third-Party Packages**: Everything uses native Apple frameworks (`AppKit`, `SwiftUI`, `ScreenCaptureKit`, `Vision`, `AVFoundation`, `CoreAudio`, `AudioToolbox`, `Combine`, `ServiceManagement`, `Foundation`).
 
 ---
 
@@ -294,9 +340,9 @@ Yes! On Macs without a notch or on external monitors, Verse automatically activa
 </details>
 
 <details>
-<summary><strong>Why does macOS prompt for Automation permission?</strong></summary>
+<summary><strong>How does Lock Screen integration work?</strong></summary>
 
-macOS requires user permission for apps that send AppleScript events to other applications (`NSAppleEventsUsageDescription`). Verse only uses AppleScript to read the currently playing track title, artist, album, duration, playback position, and album art from Spotify and Apple Music, and to send standard playback commands (play, pause, next, previous, volume).
+Verse observes macOS screen lock events via `DistributedNotificationCenter` (`com.apple.screenIsLocked`). When your Mac locks while music is playing, Verse raises a special floating panel to display your choice of vinyl turntable, high-res artwork, or live lyrics directly under the macOS clock. You can test this look anytime using the "Preview Lock Screen Widget" button in **Settings → Lock Screen**.
 </details>
 
 <details>
@@ -320,6 +366,7 @@ defaults delete com.local.verse
 - **Anonymous Lookups**:
   - Lyrics are fetched from [LRCLIB](https://lrclib.net/) using track title and artist name without transmitting personal identifiers.
   - Weather forecasts are fetched from [Open-Meteo](https://open-meteo.com/) using the city name you enter.
+- **Typing Privacy**: The Typing Buddy only counts keystroke intervals ephemerally in-memory to compute WPM—no text is ever read, recorded, or saved.
 
 ---
 

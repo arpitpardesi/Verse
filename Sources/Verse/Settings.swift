@@ -64,6 +64,8 @@ struct SettingsView: View {
 struct GeneralTab: View {
     @AppStorage(K.mode) private var mode = "island"
     @AppStorage(K.glow) private var glow = false
+    @AppStorage(K.glowStyle) private var glowStyle = "rim"
+    @AppStorage(K.glowWidth) private var glowWidth = 6.0
     @AppStorage(K.record) private var record = false
     @AppStorage(K.recordStyle) private var recordStyle = "turntable"
     @AppStorage("keepScreenAwake") private var keepScreenAwake = true
@@ -90,6 +92,21 @@ struct GeneralTab: View {
             }
             Section("Desktop extras") {
                 Toggle("Edge glow (cover-coloured light around the screen)", isOn: $glow)
+                if glow {
+                    Picker("Glow style", selection: $glowStyle) {
+                        Text("Beat Glow Rim (Needle wave)").tag("rim")
+                        Text("Border glow").tag("border")
+                        Text("Ripple").tag("ripple")
+                        Text("Spectrum bars").tag("spectrum")
+                        Text("Corner flares").tag("corners")
+                        Text("Aurora").tag("aurora")
+                    }
+                    HStack {
+                        Text("Glow thickness")
+                        Slider(value: $glowWidth, in: 1...30, step: 1)
+                        Text("\(Int(glowWidth)) pt").monospacedDigit().frame(width: 45)
+                    }
+                }
                 Toggle("Record widget on desktop", isOn: $record)
                 if record {
                     Picker("Widget style", selection: $recordStyle) {
@@ -260,6 +277,7 @@ struct IslandTab: View {
 struct LockScreenTab: View {
     @AppStorage("lockScreenEnabled") private var lockScreenEnabled = true
     @AppStorage("lockScreenStyle") private var lockScreenStyle = "turntable"
+    @ObservedObject private var lock = LockScreenController.shared
     @ObservedObject private var faceUnlock = FaceUnlockManager.shared
     @State private var passwordInput: String = ""
 
@@ -273,7 +291,30 @@ struct LockScreenTab: View {
                         Text("High-Res Artwork").tag("artwork")
                         Text("Live Synced Lyrics").tag("lyrics")
                     }
-                    Text("Appears automatically under your macOS lock screen clock when music is actively playing. Click anywhere on the lock screen widget to cycle between turntable, artwork, and lyrics.")
+                    .onChange(of: lockScreenStyle) { _, val in
+                        if let mode = LockScreenController.LockDisplayMode(rawValue: val) {
+                            lock.mode = mode
+                        }
+                    }
+
+                    HStack(spacing: 12) {
+                        Button {
+                            lock.togglePreview()
+                        } label: {
+                            Label(lock.isPreviewing ? "Dismiss Desktop Preview" : "Preview Lock Screen Widget",
+                                  systemImage: lock.isPreviewing ? "eye.slash" : "eye")
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        Button {
+                            lock.lockScreenImmediately()
+                        } label: {
+                            Label("Lock Mac Screen", systemImage: "lock.fill")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    Text("Appears automatically under your macOS lock screen clock whenever music is playing. Click anywhere on the lock screen widget to cycle between turntable, artwork, and lyrics.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

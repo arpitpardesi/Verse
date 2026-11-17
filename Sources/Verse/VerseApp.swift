@@ -109,10 +109,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if d.bool(forKey: K.glow) {
+            let glowLevel = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()) - 1)
             if glowPanel == nil {
-                glowPanel = makePanel(EdgeGlowView(), level: .floating, ignoresMouse: true)
-                glowPanel?.setFrame(screen.frame, display: true)
+                glowPanel = makePanel(EdgeGlowView(), level: glowLevel, ignoresMouse: true)
             }
+            glowPanel?.level = glowLevel
+            glowPanel?.setFrame(screen.frame, display: true)
             glowPanel?.orderFrontRegardless()
         } else {
             glowPanel?.orderOut(nil)
@@ -144,6 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             level = .floating
         case "fullscreen":
             frame = f
+            level = .floating
         case "desktop":
             frame = f
             level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)) + 1)
@@ -166,6 +169,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.level = level
         panel.setFrame(frame, display: true, animate: mode == "island")
         panel.orderFrontRegardless()
+
+        if UserDefaults.standard.bool(forKey: K.glow) {
+            glowPanel?.orderFrontRegardless()
+        }
     }
 
     @objc func openSettings() {

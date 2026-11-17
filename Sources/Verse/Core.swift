@@ -18,7 +18,7 @@ extension Notification.Name {
 }
 
 enum LyricTheme: String, CaseIterable, Identifiable {
-    case bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster
+    case bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -44,6 +44,19 @@ enum LyricTheme: String, CaseIterable, Identifiable {
         case .stars: return "Stars"
         case .typewriter: return "Typewriter"
         case .poster: return "Poster"
+        case .cyberpunk: return "Cyberpunk"
+        case .quantum: return "Quantum"
+        case .whisper: return "Whisper"
+        case .zen: return "Zen"
+        case .prism: return "Prism"
+        case .aurora: return "Aurora"
+        case .cassette: return "Cassette"
+        case .spotlight: return "Spotlight"
+        case .magazine: return "Magazine"
+        case .ipod: return "Classic Pod"
+        case .matrix: return "Matrix"
+        case .radar: return "Radar"
+        case .disc: return "CD Disc"
         }
     }
 }
