@@ -54,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = TypingBuddy.shared
         _ = WallpaperManager.shared
         _ = AirPodsMonitor.shared
+        UpdateManager.shared.startAutoCheck()
 
         panel = makePanel(RootView(), level: .statusBar)
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleLayout),

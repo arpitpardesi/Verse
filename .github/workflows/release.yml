@@ -1,0 +1,79 @@
+name: Release Verse
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v2.1)'
+        required: true
+        default: 'v2.1'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Version
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.version }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Release Binary
+        run: |
+          swift build -c release
+
+      - name: Package & Sign Verse.app
+        run: |
+          APP=Verse.app
+          rm -rf "$APP"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp .build/release/Verse "$APP/Contents/MacOS/Verse"
+          if [ -f Resources/AppIcon.icns ]; then
+              cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+          fi
+          cat > "$APP/Contents/Info.plist" <<PL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>CFBundleExecutable</key><string>Verse</string>
+          <key>CFBundleIdentifier</key><string>com.local.verse</string>
+          <key>CFBundleName</key><string>Verse</string>
+          <key>CFBundlePackageType</key><string>APPL</string>
+          <key>CFBundleShortVersionString</key><string>${{ steps.vars.outputs.version }}</string>
+          <key>CFBundleVersion</key><string>${{ steps.vars.outputs.version }}</string>
+          <key>CFBundleIconFile</key><string>AppIcon</string>
+          <key>CFBundleIconName</key><string>AppIcon</string>
+          <key>LSMinimumSystemVersion</key><string>14.0</string>
+          <key>LSUIElement</key><true/>
+          <key>NSHighResolutionCapable</key><true/>
+          <key>NSAppleEventsUsageDescription</key><string>Verse reads the current song from Spotify and Apple Music to show synced lyrics.</string>
+          <key>NSCameraUsageDescription</key><string>Verse uses the camera for hands-free face detection to wake the display when you sit down.</string>
+          </dict></plist>
+          PL
+          codesign --force --sign - "$APP"
+          ditto -c -k --keepParent "$APP" Verse.zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Verse ${{ steps.vars.outputs.tag }}
+          files: Verse.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false

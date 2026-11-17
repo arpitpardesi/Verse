@@ -203,6 +203,15 @@ Switch modes at any time from the menu bar extra or Settings:
 
 ---
 
+### 🔄 Over-The-Air (OTA) Updates
+- **Automatic GitHub Releases Integration**: Automatically queries GitHub for newer releases without requiring external package managers or manual re-downloads.
+- **Semantic Version Detection**: Compares installed build numbers against GitHub release tags (`v2.1` > `2.0`).
+- **Direct In-App Download & Extraction**: Downloads `.zip` release assets with real-time progress bars, extracts the updated binary via `/usr/bin/ditto`, and validates bundle integrity.
+- **1-Click Self-Relaunch**: Gracefully quits and restarts Verse with the newly updated version in-place.
+- **Changelog Disclosure**: Expandable in-app release notes viewer right inside **Settings → About** and **Settings → General**.
+
+---
+
 ## 🎧 Supported Music Players
 
 Verse automatically monitors and synchronizes with:
@@ -240,6 +249,24 @@ To keep it permanently, drag `Verse.app` to your `/Applications` folder:
 ```bash
 mv Verse.app /Applications/
 ```
+
+### 🚀 Releasing Updates (1-Command Automation)
+
+To publish a new Over-The-Air update to all Verse users, run:
+
+```bash
+./release.sh <version> ["Release notes"]
+
+# Example:
+./release.sh 2.1 "New Picture Disc CD theme, battery optimizations & bug fixes"
+```
+
+This single command automatically:
+1. Updates `CFBundleShortVersionString` and `CFBundleVersion`.
+2. Compiles and signs the production `Verse.app`.
+3. Packages `Verse.zip` using Apple `ditto` (preserving code signatures).
+4. Commits, tags `v<version>`, and pushes to GitHub.
+5. Triggers the automated **GitHub Actions CI/CD pipeline** (`.github/workflows/release.yml`) to publish the release with `Verse.zip` attached.
 
 ### Building via Swift Package Manager
 

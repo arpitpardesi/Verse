@@ -4,6 +4,7 @@ import SwiftUI
 struct MenuView: View {
     @ObservedObject var np = NowPlaying.shared
     @ObservedObject var lyrics = LyricsStore.shared
+    @ObservedObject var updater = UpdateManager.shared
     @AppStorage(K.mode) private var mode = "island"
     @AppStorage(K.theme) private var theme = LyricTheme.bigWord.rawValue
     @AppStorage(K.artLyrics) private var artLyrics = true
@@ -32,6 +33,33 @@ struct MenuView: View {
 
     var body: some View {
         VStack(spacing: 14) {
+            // Optional OTA Update Available banner
+            if updater.hasUpdate {
+                Button {
+                    NotificationCenter.default.post(name: .verseSettings, object: nil)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(.pink)
+                        Text("New Update Available")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text("Install")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.pink)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.pink.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Color.pink.opacity(0.3), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+
             // Now playing card
             VStack(spacing: 10) {
                 HStack(spacing: 12) {

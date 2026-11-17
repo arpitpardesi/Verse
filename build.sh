@@ -16,7 +16,8 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>CFBundleIdentifier</key><string>com.local.verse</string>
 <key>CFBundleName</key><string>Verse</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleVersion</key><string>2</string>
+<key>CFBundleShortVersionString</key><string>2.0</string>
+<key>CFBundleVersion</key><string>2.0</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleIconName</key><string>AppIcon</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
@@ -28,4 +29,6 @@ cat > "$APP/Contents/Info.plist" <<PL
 PL
 codesign --force --sign - "$APP"
 echo "Built $APP — drag it to /Applications and open it."
-open "$APP"
+if [ "$1" != "--no-open" ] && [ -z "$NO_OPEN" ]; then
+    open "$APP"
+fi

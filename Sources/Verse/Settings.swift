@@ -120,6 +120,32 @@ struct GeneralTab: View {
                 Button("Copy lyric card of the current line") { Sharing.copyCard() }
                 Button("Set wallpaper from album colours") { Sharing.setWallpaper() }
             }
+            Section("Software Updates (OTA)") {
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Verse v\(UpdateManager.shared.currentVersion)")
+                            .font(.system(size: 13, weight: .semibold))
+                        if case .updateAvailable(let rel, _) = UpdateManager.shared.status {
+                            Text("Update Available: \(rel.tag_name)")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.pink)
+                        } else {
+                            Text("Zero-friction Over-The-Air releases from GitHub")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Button("Check Now") {
+                        UpdateManager.shared.checkForUpdates()
+                    }
+                    .controlSize(.small)
+                }
+                Toggle("Automatically check for updates", isOn: Binding(
+                    get: { UpdateManager.shared.autoCheck },
+                    set: { UpdateManager.shared.autoCheck = $0 }
+                ))
+            }
         }
         .formStyle(.grouped)
     }
@@ -488,47 +514,174 @@ struct DiaryView: View {
     }
 }
 
+struct AboutFeatureItem: View {
+    let icon: String
+    let gradient: [Color]
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 struct AboutTab: View {
+    @ObservedObject var power = PowerOptimizer.shared
+
     private var appIcon: NSImage? {
         if let icon = NSApp.applicationIconImage, icon.isValid, icon.size.width > 32 {
             return icon
         }
         if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
-           let img = NSImage(contentsOfFile: path) {
+           let img = NSImage(contentsOfFile: path), img.isValid {
             return img
         }
-        for rel in ["Resources/AppIcon-1024.png", "Resources/AppIcon.icns"] {
-            if FileManager.default.fileExists(atPath: rel), let img = NSImage(contentsOfFile: rel) {
+        if let resURL = Bundle.main.resourceURL?.appendingPathComponent("AppIcon.icns"),
+           let img = NSImage(contentsOf: resURL), img.isValid {
+            return img
+        }
+        for rel in ["Resources/AppIcon-1024.png", "Resources/AppIcon.icns", "AppIcon-1024.png"] {
+            if FileManager.default.fileExists(atPath: rel), let img = NSImage(contentsOfFile: rel), img.isValid {
                 return img
             }
         }
         return NSApp.applicationIconImage
     }
 
+    @ViewBuilder
+    private var iconView: some View {
+        if let icon = appIcon {
+            Image(nsImage: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 84, height: 84)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
+                .shadow(color: .black.opacity(0.22), radius: 10, y: 5)
+        } else {
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LinearGradient(colors: [Color.pink, Color.purple, Color.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                Image(systemName: "music.note.list")
+                    .font(.system(size: 38, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 84, height: 84)
+            .shadow(color: Color.purple.opacity(0.35), radius: 10, y: 5)
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                // Header with App Icon and Title
+                // Header with App Icon, Title & Live Power Badge
                 HStack(alignment: .center, spacing: 20) {
-                    if let icon = appIcon {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 84, height: 84)
-                            .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 4)
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
+                    iconView
+
+                    VStack(alignment: .leading, spacing: 6) {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text("Verse").font(.system(size: 26, weight: .bold))
-                            Text("v2.0").font(.system(size: 13, weight: .semibold))
+                            Text("Verse").font(.system(size: 28, weight: .bold, design: .rounded))
+                            Text("v2.0").font(.system(size: 12, weight: .bold))
                                 .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
+                                .padding(.vertical, 3)
+                                .background(.tint.opacity(0.15), in: Capsule())
+                                .foregroundStyle(.tint)
+                            Text("Universal").font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
                                 .background(.quaternary, in: Capsule())
                                 .foregroundStyle(.secondary)
                         }
-                        Text("Real-time synchronized lyrics & notch player for Mac")
+
+                        Text("Real-time synchronized lyrics, notch player & ambient visualizer for Mac")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
+
+                        // Live System & Power Indicator
+                        HStack(spacing: 12) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "apple.logo")
+                                    .font(.system(size: 11))
+                                Text("macOS 14+")
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            .foregroundStyle(.secondary)
+
+                            Text("•").foregroundStyle(.tertiary)
+
+                            HStack(spacing: 5) {
+                                Image(systemName: power.isLowPowerMode ? "leaf.fill" : (power.isOnBattery ? "battery.75" : "bolt.fill"))
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(power.isLowPowerMode ? .yellow : (power.isOnBattery ? .orange : .green))
+                                Text(power.isLowPowerMode ? "Low Power (24 FPS)" : (power.isOnBattery ? "Battery \(power.batteryLevel)% (30 FPS)" : "AC Connected (60 FPS)"))
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.top, 2)
+                    }
+                }
+
+                Divider()
+
+                // Over-The-Air Update Section
+                UpdateCardView()
+
+                Divider()
+
+                // Key Features Showcase with Icons
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Highlights").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
+
+                    Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 16) {
+                        GridRow {
+                            AboutFeatureItem(icon: "quote.bubble.fill",
+                                             gradient: [.purple, .pink],
+                                             title: "Synced Lyrics Engine",
+                                             subtitle: "Line-by-line synchronized LRC lyrics with zero-latency timing.")
+                            AboutFeatureItem(icon: "display",
+                                             gradient: [.blue, .cyan],
+                                             title: "MacBook Notch Player",
+                                             subtitle: "Hardware 22pt curved corners hugging Liquid Retina displays.")
+                        }
+                        GridRow {
+                            AboutFeatureItem(icon: "bolt.batteryblock.fill",
+                                             gradient: [.green, .teal],
+                                             title: "Battery Optimizer",
+                                             subtitle: "Dynamic frame throttling with 0% CPU consumption when paused.")
+                            AboutFeatureItem(icon: "waveform.path.badge.plus",
+                                             gradient: [.orange, .pink],
+                                             title: "Audio-Reactive Glow",
+                                             subtitle: "Sub-bass DSP beat detection lighting your MacBook display edges.")
+                        }
+                        GridRow {
+                            AboutFeatureItem(icon: "record.circle.fill",
+                                             gradient: [.indigo, .purple],
+                                             title: "Vinyl & Lock Screen",
+                                             subtitle: "Interactive spinning turntable, picture disc art, and lyrics preview.")
+                            AboutFeatureItem(icon: "lock.shield.fill",
+                                             gradient: [.teal, .blue],
+                                             title: "100% Private & Local",
+                                             subtitle: "Runs entirely on-device with zero telemetry, tracking, or accounts.")
+                        }
                     }
                 }
 
@@ -536,45 +689,63 @@ struct AboutTab: View {
 
                 // Developer Card
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Created by").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
+                    Text("Developer").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
                     HStack(spacing: 14) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 34))
-                            .foregroundStyle(.tint)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Arpit Pardesi").font(.system(size: 15, weight: .semibold))
-                            Text("Developer & Creator").font(.system(size: 12)).foregroundStyle(.secondary)
+                        ZStack {
+                            Circle()
+                                .fill(LinearGradient(colors: [Color.pink, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 44, height: 44)
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(.white)
                         }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Arpit Pardesi").font(.system(size: 15, weight: .bold))
+                            Text("Creator & Developer").font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+
                         Spacer()
-                        if let githubURL = URL(string: "https://github.com/arpitpardesi") {
-                            Link(destination: githubURL) {
-                                Label("GitHub Profile", systemImage: "arrow.up.right.square")
+
+                        HStack(spacing: 8) {
+                            if let githubURL = URL(string: "https://github.com/arpitpardesi") {
+                                Link(destination: githubURL) {
+                                    Label("GitHub", systemImage: "arrow.up.right.square")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+
+                            if let emailURL = URL(string: "mailto:arpit.pardesi6@gmail.com") {
+                                Link(destination: emailURL) {
+                                    Label("Contact", systemImage: "envelope.fill")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
                         }
                     }
                     .padding(14)
-                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+                    .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
                 }
 
-                // Quick Links
+                // Project & Community Links with Icons
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Project Links").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
                     HStack(spacing: 10) {
                         if let repoURL = URL(string: "https://github.com/arpitpardesi/Verse") {
                             Link(destination: repoURL) {
-                                Label("Source Code", systemImage: "curlybraces")
+                                Label("Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
                             }
                         }
                         if let issuesURL = URL(string: "https://github.com/arpitpardesi/Verse/issues") {
                             Link(destination: issuesURL) {
-                                Label("Report an Issue", systemImage: "ladybug")
+                                Label("Report an Issue", systemImage: "ladybug.fill")
                             }
                         }
-                        if let emailURL = URL(string: "mailto:arpit.pardesi6@gmail.com") {
-                            Link(destination: emailURL) {
-                                Label("Contact", systemImage: "envelope")
+                        if let releasesURL = URL(string: "https://github.com/arpitpardesi/Verse/releases") {
+                            Link(destination: releasesURL) {
+                                Label("Releases", systemImage: "sparkles")
                             }
                         }
                     }
@@ -582,46 +753,76 @@ struct AboutTab: View {
                     .controlSize(.small)
                 }
 
-                // Acknowledgements & Data Sources
-                VStack(alignment: .leading, spacing: 8) {
+                // Acknowledgements & Data Sources with Icons
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Powered By").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).textCase(.uppercase)
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 6) {
-                            Text("•").foregroundStyle(.secondary)
-                            Text("Lyrics:").foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "quote.bubble.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.purple)
+                                .frame(width: 18)
+                            Text("Lyrics:")
+                                .font(.system(size: 12, weight: .semibold))
                             Link("LRCLIB", destination: URL(string: "https://lrclib.net")!)
                                 .font(.system(size: 12, weight: .medium))
-                            Text("— free, synchronized community lyrics database").font(.system(size: 12)).foregroundStyle(.secondary)
+                            Text("— free community-powered synchronized lyrics").font(.system(size: 12)).foregroundStyle(.secondary)
                         }
-                        HStack(spacing: 6) {
-                            Text("•").foregroundStyle(.secondary)
-                            Text("Weather:").foregroundStyle(.secondary)
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "cloud.sun.rain.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.blue)
+                                .frame(width: 18)
+                            Text("Weather:")
+                                .font(.system(size: 12, weight: .semibold))
                             Link("Open-Meteo", destination: URL(string: "https://open-meteo.com")!)
                                 .font(.system(size: 12, weight: .medium))
                             Text("— open-source weather forecasting API").font(.system(size: 12)).foregroundStyle(.secondary)
                         }
-                        HStack(spacing: 6) {
-                            Text("•").foregroundStyle(.secondary)
-                            Text("Artwork:").foregroundStyle(.secondary)
-                            Text("iTunes Search API & Spotify").font(.system(size: 12)).foregroundStyle(.secondary)
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "music.note")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.pink)
+                                .frame(width: 18)
+                            Text("Now Playing:")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("Apple Music & Spotify integration via AppleEvents & ScriptingBridge").font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "waveform")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.orange)
+                                .frame(width: 18)
+                            Text("Audio DSP:")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("ScreenCaptureKit & CoreAudio low-latency hardware stream tapping").font(.system(size: 12)).foregroundStyle(.secondary)
                         }
                     }
                     .font(.system(size: 12))
                 }
 
-                // Privacy & Open Source Note
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("100% Local & Private")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("Verse runs entirely on your Mac with zero telemetry, tracking, or accounts. Licensed under MIT.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+                // Privacy & Open Source Badge with Icon
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "hand.raised.square.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.teal)
 
-                Spacer(minLength: 10)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("100% Local & Private • Open Source (MIT)")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Verse never collects analytics, telemetry, or personal data. Everything runs locally on your Mac.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+
+                Spacer(minLength: 16)
             }
             .padding(24)
         }
