@@ -21,12 +21,13 @@ func lineIndex(_ lines: [LyricLine], _ t: Double) -> Int {
     return ans
 }
 
+private let lrcRegex = try! NSRegularExpression(pattern: #"\[(\d+):(\d+(?:\.\d+)?)\]"#)
+
 func parseLRC(_ lrc: String) -> [LyricLine] {
-    let re = try! NSRegularExpression(pattern: #"\[(\d+):(\d+(?:\.\d+)?)\]"#)
     var out: [(Double, String)] = []
     for raw in lrc.components(separatedBy: .newlines) {
         let ns = raw as NSString
-        let matches = re.matches(in: raw, range: NSRange(location: 0, length: ns.length))
+        let matches = lrcRegex.matches(in: raw, range: NSRange(location: 0, length: ns.length))
         guard let last = matches.last else { continue }
         let text = ns.substring(from: last.range.upperBound).trimmingCharacters(in: .whitespaces)
         for m in matches {
@@ -54,6 +55,7 @@ final class LyricsStore: ObservableObject {
     private var loadingOffset = false
     private var key = ""
     private var task: Task<Void, Never>?
+    private static var lyricsCache: [String: (String?, String?)] = [:]
 
     /// Per-song offset + global latency setting (e.g. Bluetooth headphones).
     var totalOffset: Double { offset + UserDefaults.standard.double(forKey: "globalOffset") }
@@ -67,10 +69,20 @@ final class LyricsStore: ObservableObject {
         loadingOffset = true
         offset = (UserDefaults.standard.dictionary(forKey: "songOffsets") as? [String: Double])?[key] ?? 0
         loadingOffset = false
+
+        // Check in-memory lyrics cache to eliminate redundant network queries
+        if let cached = Self.lyricsCache[key] {
+            if let s = cached.0, !s.isEmpty { state = .synced(parseLRC(s)) }
+            else if let p = cached.1, !p.isEmpty { state = .plain(p) }
+            else { state = .none }
+            return
+        }
+
         state = .loading
         task = Task {
             let result = await Self.fetch(track)
             if Task.isCancelled { return }
+            Self.lyricsCache[self.key] = result
             if let s = result.0, !s.isEmpty { state = .synced(parseLRC(s)) }
             else if let p = result.1, !p.isEmpty { state = .plain(p) }
             else { state = .none }

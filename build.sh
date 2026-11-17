@@ -23,6 +23,7 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSAppleEventsUsageDescription</key><string>Verse reads the current song from Spotify and Apple Music to show synced lyrics.</string>
+<key>NSCameraUsageDescription</key><string>Verse uses the camera for hands-free face detection to wake the display when you sit down.</string>
 </dict></plist>
 PL
 codesign --force --sign - "$APP"

@@ -21,7 +21,11 @@ final class ScreenWakeManager: ObservableObject {
     func evaluate(playing: Bool? = nil) {
         let isPlaying = playing ?? NowPlaying.shared.isPlaying
         let enabled = UserDefaults.standard.object(forKey: "keepScreenAwake") as? Bool ?? true
-        if isPlaying && enabled {
+        let power = PowerOptimizer.shared
+        // Battery safeguard: Don't force display awake if in Low Power Mode or critically low battery (<20%)
+        let batteryAllows = !power.isLowPowerMode && !(power.isOnBattery && power.batteryLevel <= 20)
+
+        if isPlaying && enabled && batteryAllows {
             acquire()
         } else {
             release()

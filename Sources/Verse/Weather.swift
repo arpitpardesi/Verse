@@ -16,9 +16,11 @@ final class Weather: ObservableObject {
 
     func start() {
         refresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 1200, repeats: true) { [weak self] _ in
+        let t = Timer.scheduledTimer(withTimeInterval: 1200, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
+        t.tolerance = 60.0
+        timer = t
     }
 
     func refreshIfNeeded() {

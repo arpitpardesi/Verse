@@ -37,12 +37,6 @@ final class TypingBuddy: ObservableObject {
         self.soundpack = UserDefaults.standard.string(forKey: "typingSoundpack") ?? "mechanical"
         self.playSounds = UserDefaults.standard.object(forKey: "typingSoundsEnabled") as? Bool ?? true
         updateMonitoring()
-
-        decayTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.recalculateWPM()
-            }
-        }
     }
 
     private func updateMonitoring() {
@@ -71,7 +65,19 @@ final class TypingBuddy: ObservableObject {
     private func stopMonitoring() {
         if let g = globalMonitor { NSEvent.removeMonitor(g); globalMonitor = nil }
         if let l = localMonitor { NSEvent.removeMonitor(l); localMonitor = nil }
+        decayTimer?.invalidate()
+        decayTimer = nil
         wpm = 0
+    }
+
+    private func ensureDecayTimer() {
+        guard decayTimer == nil else { return }
+        decayTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.recalculateWPM()
+            }
+        }
+        decayTimer?.tolerance = 0.15
     }
 
     private func handleKeypress() {
@@ -88,6 +94,7 @@ final class TypingBuddy: ObservableObject {
         if playSounds {
             playSound()
         }
+        ensureDecayTimer()
         recalculateWPM()
     }
 
@@ -99,6 +106,10 @@ final class TypingBuddy: ObservableObject {
         let calculated = Int(Double(count) / 5.0 * 12.0)
         withAnimation(.easeInOut(duration: 0.2)) {
             self.wpm = calculated
+        }
+        if count == 0 && calculated == 0 {
+            decayTimer?.invalidate()
+            decayTimer = nil
         }
     }
 

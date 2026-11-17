@@ -49,11 +49,13 @@ final class WallpaperManager: ObservableObject {
         cycleTimer?.invalidate()
         guard autoCycle != "off" else { return }
         let interval: TimeInterval = autoCycle == "hourly" ? 3600 : 86400
-        cycleTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        let t = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.cycleNext()
             }
         }
+        t.tolerance = 60.0
+        cycleTimer = t
     }
 
     func cycleNext() {

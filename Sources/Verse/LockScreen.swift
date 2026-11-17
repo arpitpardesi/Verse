@@ -191,13 +191,15 @@ final class LockScreenController: ObservableObject {
 
     private func startLockTimer() {
         lockTimer?.invalidate()
-        lockTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+        let t = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self, self.isLocked else { return }
                 // Re-assert front layer above loginwindow while screen is locked
                 self.lockPanel?.orderFrontRegardless()
             }
         }
+        t.tolerance = 0.5
+        lockTimer = t
     }
 
     private func stopLockTimer() {
@@ -371,7 +373,7 @@ struct LockScreenPlayerView: View {
 
                 case .lyrics:
                     VStack(spacing: 10) {
-                        TimelineView(.periodic(from: .now, by: 0.15)) { ctx in
+                        TimelineView(.periodic(from: .now, by: np.isPlaying ? 0.15 : 2.0)) { ctx in
                             let pos = np.position(at: ctx.date) + lyrics.totalOffset
                             if case .synced(let lines) = lyrics.state {
                                 let idx = lineIndex(lines, pos)

@@ -16,16 +16,60 @@ final class NowPlaying: ObservableObject {
     private var lastPoll = Date()
     private var timer: Timer?
     private var artTask: Task<Void, Never>?
+    private static let artCache = NSCache<NSString, NSImage>()
 
     func position(at date: Date = Date()) -> Double {
         isPlaying ? basePosition + date.timeIntervalSince(baseDate) : basePosition
     }
 
     func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        setupSystemObservers()
+        rescheduleTimer()
+        poll()
+    }
+
+    private func setupSystemObservers() {
+        let dnc = DistributedNotificationCenter.default()
+        // Spotify playback change notification
+        dnc.addObserver(self, selector: #selector(handlePlayerNotification),
+                        name: NSNotification.Name("com.spotify.client.PlaybackStateChanged"), object: nil,
+                        suspensionBehavior: .deliverImmediately)
+        // Apple Music playback change notification
+        dnc.addObserver(self, selector: #selector(handlePlayerNotification),
+                        name: NSNotification.Name("com.apple.Music.playerInfo"), object: nil,
+                        suspensionBehavior: .deliverImmediately)
+
+        // Display sleep / wake to eliminate wasted polling
+        let wnc = NSWorkspace.shared.notificationCenter
+        wnc.addObserver(self, selector: #selector(handleScreensDidSleep),
+                        name: NSWorkspace.screensDidSleepNotification, object: nil)
+        wnc.addObserver(self, selector: #selector(handleScreensDidWake),
+                        name: NSWorkspace.screensDidWakeNotification, object: nil)
+    }
+
+    @objc private func handlePlayerNotification() {
+        Task { @MainActor in
+            self.poll()
+        }
+    }
+
+    @objc private func handleScreensDidSleep() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    @objc private func handleScreensDidWake() {
+        rescheduleTimer()
+        poll()
+    }
+
+    private func rescheduleTimer() {
+        timer?.invalidate()
+        let interval: TimeInterval = isPlaying ? 1.5 : 4.0
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.poll() }
         }
-        poll()
+        timer?.tolerance = isPlaying ? 0.3 : 1.0
     }
 
     private let spotifyScript = """
@@ -73,11 +117,18 @@ final class NowPlaying: ObservableObject {
         if running("com.apple.Music"), let r = run(musicScript), let x = parse(r, source: "Music") { found.append(x) }
         guard let pick = found.first(where: { $0.1 }) ?? found.first else {
             if track != nil { track = nil; artwork = nil }
-            isPlaying = false
+            if isPlaying {
+                isPlaying = false
+                rescheduleTimer()
+            }
             return
         }
         if track != pick.0 { track = pick.0; loadArtwork(pick.0) }
+        let wasPlaying = isPlaying
         isPlaying = pick.1
+        if wasPlaying != isPlaying {
+            rescheduleTimer()
+        }
         basePosition = pick.2
         baseDate = Date()
         volume = pick.3
@@ -104,6 +155,17 @@ final class NowPlaying: ObservableObject {
 
     private func loadArtwork(_ t: Track) {
         artTask?.cancel()
+        let cacheKey = "\(t.artist) - \(t.album.isEmpty ? t.title : t.album)" as NSString
+        if let cached = Self.artCache.object(forKey: cacheKey) {
+            self.artwork = cached
+            var c = cached.dominantColors()
+            if !c.isEmpty {
+                while c.count < 3 { c.append(c[c.count % max(1, c.count)]) }
+                self.colors = c
+            }
+            return
+        }
+
         artwork = nil
         colors = palette(t.title)
         artTask = Task {
@@ -111,6 +173,7 @@ final class NowPlaying: ObservableObject {
             if url == nil { url = await Self.itunesArt(t) }
             guard let u = url, let (data, _) = try? await URLSession.shared.data(from: u),
                   let img = NSImage(data: data), !Task.isCancelled else { return }
+            Self.artCache.setObject(img, forKey: cacheKey)
             artwork = img
             var c = img.dominantColors()
             if !c.isEmpty {

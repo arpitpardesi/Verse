@@ -22,6 +22,32 @@ final class AudioReactor: NSObject, SCStreamOutput, SCStreamDelegate {
     private var running = false
     private var starting = false
     private var status = "Off"
+    private var wasRunningBeforeSleep = false
+
+    override init() {
+        super.init()
+        let ws = NSWorkspace.shared.notificationCenter
+        ws.addObserver(forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self = self else { return }
+            self.lock.lock()
+            let isRun = self.running
+            self.lock.unlock()
+            if isRun {
+                self.wasRunningBeforeSleep = true
+                self.stop()
+            }
+        }
+        ws.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self = self else { return }
+            if self.wasRunningBeforeSleep {
+                self.wasRunningBeforeSleep = false
+                let d = UserDefaults.standard
+                if d.bool(forKey: K.glow) && (d.string(forKey: K.glowSync) ?? "audio") == "audio" {
+                    self.start()
+                }
+            }
+        }
+    }
     // DSP state (audio queue only)
     private var lp1 = 0.0, lp2 = 0.0, avgLow = 1e-4
     private var peakAll = 1e-3, peakLow = 1e-3, peakMid = 1e-3, peakHigh = 1e-3
@@ -217,7 +243,7 @@ struct EdgeGlowView: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30)) { ctx in
+        TimelineView(.animation(minimumInterval: PowerOptimizer.shared.isLowPowerMode ? 1.0 / 20 : 1.0 / 30, paused: !np.isPlaying)) { ctx in
             let smp = sample(ctx.date)
             let t = ctx.date.timeIntervalSinceReferenceDate
             Canvas { c, sz in
@@ -229,6 +255,7 @@ struct EdgeGlowView: View {
     }
 }
 
+@MainActor
 enum GlowRenderer {
     static func draw(_ c: inout GraphicsContext, size: CGSize, style: String, cols: [Color],
                      smp: BeatSample, t: Double, intensity: Double, width: Double) {
@@ -264,11 +291,12 @@ enum GlowRenderer {
                 angle: .degrees(angle)
             )
 
-            // Multi-tier bloom layers on the rim
+            // Multi-tier bloom layers on the rim (simplified to single tier on Low Power Mode)
             let rimWidths: [CGFloat] = [w * (1.0 + 0.9 * CGFloat(pulse)), w * (2.4 + 1.2 * CGFloat(pulse)), w * (4.5 + 2.0 * CGFloat(pulse))]
             let rimOpacities: [Double] = [min(1.0, power * 1.4), min(0.7, power * 0.55), min(0.4, power * 0.28)]
+            let tierCount = PowerOptimizer.shared.isLowPowerMode ? 1 : 3
 
-            for k in 0..<3 {
+            for k in 0..<tierCount {
                 c.drawLayer { l in
                     l.opacity = rimOpacities[k]
                     l.stroke(path, with: conic, lineWidth: rimWidths[k])

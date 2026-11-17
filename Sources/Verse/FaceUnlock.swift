@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-import AVFoundation
+@preconcurrency import AVFoundation
 import Vision
 import Security
 
@@ -21,6 +21,7 @@ final class FaceUnlockManager: NSObject, ObservableObject, AVCaptureVideoDataOut
     private var captureSession: AVCaptureSession?
     private let videoOutputQueue = DispatchQueue(label: "verse.faceunlock", qos: .userInitiated)
     private var lastUnlockAttempt: Date = .distantPast
+    private var timeoutTask: Task<Void, Never>?
 
     override init() {
         super.init()
@@ -35,6 +36,10 @@ final class FaceUnlockManager: NSObject, ObservableObject, AVCaptureVideoDataOut
                         name: NSNotification.Name("com.apple.screenIsLocked"), object: nil)
         dnc.addObserver(self, selector: #selector(screenUnlocked),
                         name: NSNotification.Name("com.apple.screenIsUnlocked"), object: nil)
+
+        let wnc = NSWorkspace.shared.notificationCenter
+        wnc.addObserver(self, selector: #selector(screenUnlocked),
+                        name: NSWorkspace.screensDidSleepNotification, object: nil)
     }
 
     @objc private func screenLocked() {
@@ -50,6 +55,15 @@ final class FaceUnlockManager: NSObject, ObservableObject, AVCaptureVideoDataOut
         guard !isScanning else { return }
         isScanning = true
         statusText = "Scanning for face..."
+
+        // Auto-timeout after 25s to prevent draining battery
+        timeoutTask?.cancel()
+        timeoutTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 25_000_000_000)
+            guard !Task.isCancelled, let self, self.isScanning else { return }
+            self.statusText = "Scan timed out"
+            self.stopScanning()
+        }
 
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             guard granted else {
@@ -84,14 +98,22 @@ final class FaceUnlockManager: NSObject, ObservableObject, AVCaptureVideoDataOut
         output.setSampleBufferDelegate(self, queue: videoOutputQueue)
         if session.canAddOutput(output) { session.addOutput(output) }
 
-        session.startRunning()
         self.captureSession = session
+        videoOutputQueue.async {
+            session.startRunning()
+        }
     }
 
     func stopScanning() {
+        timeoutTask?.cancel()
+        timeoutTask = nil
         isScanning = false
-        captureSession?.stopRunning()
-        captureSession = nil
+        if let s = captureSession {
+            captureSession = nil
+            videoOutputQueue.async {
+                s.stopRunning()
+            }
+        }
         statusText = isEnabled ? "Idle" : "Disabled"
     }
 

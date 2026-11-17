@@ -75,8 +75,8 @@ struct IslandView: View {
 
     var outline: AnyShape {
         classic
-        ? AnyShape(UnevenRoundedRectangle(bottomLeadingRadius: expanded ? 36 : 28, bottomTrailingRadius: expanded ? 36 : 28, style: .continuous))
-        : AnyShape(RoundedRectangle(cornerRadius: expanded ? 34 : 28, style: .continuous))
+        ? AnyShape(UnevenRoundedRectangle(bottomLeadingRadius: expanded ? 32 : 22, bottomTrailingRadius: expanded ? 32 : 22, style: .continuous))
+        : AnyShape(RoundedRectangle(cornerRadius: expanded ? 32 : 24, style: .continuous))
     }
 
     var body: some View {
@@ -125,7 +125,7 @@ struct IslandView: View {
             }
             .frame(height: NotchInfo.height)
             // Live lyric sits below the notch.
-            TimelineView(.periodic(from: .now, by: 0.2)) { ctx in
+            TimelineView(.periodic(from: .now, by: np.isPlaying ? 0.2 : 2.0)) { ctx in
                 Text(subtitle(ctx.date)).font(.system(size: 12, weight: .medium)).lineLimit(1)
                     .foregroundStyle(.white.opacity(0.85))
             }
@@ -140,7 +140,7 @@ struct IslandView: View {
             CoverView(art: np.artwork, size: 38)
             VStack(alignment: .leading, spacing: 2) {
                 Text(np.track?.title ?? "Nothing playing").font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                TimelineView(.periodic(from: .now, by: 0.2)) { ctx in
+                TimelineView(.periodic(from: .now, by: np.isPlaying ? 0.2 : 2.0)) { ctx in
                     Text(subtitle(ctx.date)).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).lineLimit(1)
                 }
             }
@@ -368,7 +368,7 @@ struct ProgressLine: View {
     @ObservedObject var np = NowPlaying.shared
     var tint: Color
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.5)) { ctx in
+        TimelineView(.periodic(from: .now, by: np.isPlaying ? 0.5 : 4.0)) { ctx in
             let dur = max(np.track?.duration ?? 1, 1)
             let frac = min(1, max(0, np.position(at: ctx.date) / dur))
             GeometryReader { g in

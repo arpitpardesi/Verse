@@ -6,7 +6,7 @@ struct RecordView: View {
     var size: CGFloat
     var animated = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !np.isPlaying)) { ctx in
             let angle = np.position(at: ctx.date) * 100
             ZStack {
                 ZStack {

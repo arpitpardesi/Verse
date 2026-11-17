@@ -58,6 +58,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel = makePanel(RootView(), level: .statusBar)
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleLayout),
                                                name: UserDefaults.didChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(scheduleLayout),
+                                               name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(scheduleLayout),
+                                                          name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
                                                name: .verseSettings, object: nil)
         layout()
@@ -72,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         p.hasShadow = false
         p.level = level
         p.ignoresMouseEvents = ignoresMouse
-        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         let host = NSHostingView(rootView: view)
         host.sizingOptions = []
         p.contentView = host
@@ -96,17 +100,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let expanded = d.bool(forKey: K.expanded)
         let shape = d.string(forKey: K.shape) ?? "classic"
         let hasCity = !(d.string(forKey: K.city) ?? "").trimmingCharacters(in: .whitespaces).isEmpty
-        let sig = "\(mode)|\(expanded)|\(shape)|\(hasCity)|\(screen.frame)"
-        if sig != mainSig {
-            mainSig = sig
-            applyMain(screen, mode: mode, expanded: expanded, shape: shape, hasCity: hasCity)
-        }
-
-        if d.bool(forKey: K.glow) && (d.string(forKey: K.glowSync) ?? "audio") == "audio" {
-            AudioReactor.shared.start()
-        } else {
-            AudioReactor.shared.stop()
-        }
 
         if d.bool(forKey: K.glow) {
             let glowLevel = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()) - 1)
@@ -118,6 +111,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             glowPanel?.orderFrontRegardless()
         } else {
             glowPanel?.orderOut(nil)
+        }
+
+        if d.bool(forKey: K.glow) && (d.string(forKey: K.glowSync) ?? "audio") == "audio" {
+            AudioReactor.shared.start()
+        } else {
+            AudioReactor.shared.stop()
+        }
+
+        let sig = "\(mode)|\(expanded)|\(shape)|\(hasCity)|\(screen.frame)"
+        if sig != mainSig {
+            mainSig = sig
+            applyMain(screen, mode: mode, expanded: expanded, shape: shape, hasCity: hasCity)
+        } else if d.bool(forKey: K.glow) {
+            glowPanel?.orderFrontRegardless()
         }
 
         if d.bool(forKey: K.record) {

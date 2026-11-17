@@ -19,7 +19,7 @@ struct StarField: View {
     var animated: Bool = true
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: PowerOptimizer.shared.animationInterval, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, size in
                 // 1. Cosmic Deep Space Background
@@ -107,7 +107,7 @@ struct StarField: View {
 struct CyberpunkBackground: View {
     var animated: Bool = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 // Deep dark cyber background
@@ -157,7 +157,7 @@ struct QuantumBackground: View {
     var animated: Bool = true
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: PowerOptimizer.shared.animationInterval, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.02, green: 0.025, blue: 0.05)))
@@ -196,7 +196,7 @@ struct PrismBackground: View {
     var animated: Bool = true
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.04, green: 0.04, blue: 0.05)))
@@ -228,7 +228,7 @@ struct AuroraBackground: View {
     var animated: Bool = true
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.02, green: 0.03, blue: 0.06)))
@@ -269,7 +269,7 @@ struct AuroraBackground: View {
 struct MatrixBackground: View {
     var animated: Bool = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 25, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 25, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.01, green: 0.02, blue: 0.015)))
@@ -301,7 +301,7 @@ struct MatrixBackground: View {
 struct RadarBackground: View {
     var animated: Bool = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.02, green: 0.04, blue: 0.03)))
@@ -349,7 +349,7 @@ struct SpotlightBackground: View {
     var tint: Color = .purple
     var animated: Bool = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.03, green: 0.03, blue: 0.04)))
@@ -384,7 +384,7 @@ struct SpotlightBackground: View {
 struct DiscBackground: View {
     var animated: Bool = true
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             Canvas { c, sz in
                 c.fill(Path(CGRect(origin: .zero, size: sz)), with: .color(Color(red: 0.04, green: 0.04, blue: 0.05)))
@@ -499,7 +499,7 @@ struct ThemeBackground: View {
                 Circle().fill(c1).frame(width: 200, height: 200).offset(x: 60, y: 30)
             }.blur(radius: 30)
         case .aura:
-            TimelineView(.animation(minimumInterval: 1.0 / 20)) { ctx in
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
                 let t = ctx.date.timeIntervalSinceReferenceDate / 4
                 ZStack {
                     Color.black
@@ -812,7 +812,7 @@ struct SyncedLyrics: View {
         case .wave:
             let ws = wordsOf(cur)
             let wi = min(max(ws.count - 1, 0), Int(progress * Double(ws.count)))
-            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated)) { ctx in
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
                 let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
                 ZStack {
                     WaveBackdrop(colors: s.colors, t: t)
@@ -866,7 +866,7 @@ struct SyncedLyrics: View {
             .id(index)
 
         case .echo:
-            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated)) { ctx in
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
                 let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
                 ZStack {
                     Canvas { c, sz in
@@ -933,7 +933,7 @@ struct SyncedLyrics: View {
             }
 
         case .liquid:
-            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated)) { ctx in
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
                 let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
                 let sway = 0.5 * sin(t * 0.7)
                 let fillGrad = LinearGradient(colors: [s.c(0), Color.white, s.c(1), s.c(2)],
@@ -963,7 +963,7 @@ struct SyncedLyrics: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
         case .synthwave:
-            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated)) { ctx in
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
                 let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
                 ZStack {
                     Canvas { c, sz in
@@ -1406,7 +1406,7 @@ struct CassetteTapeView: View {
     var animated: Bool = true
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
             let spin = t * 120.0
 
@@ -1681,8 +1681,8 @@ struct CompactDiscView: View {
     let s: LStyle
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated)) { ctx in
-            let spin = animated && np.isPlaying ? np.position(at: ctx.date) * 80.0 : (animated ? ctx.date.timeIntervalSinceReferenceDate * 25.0 : 0.0)
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !np.isPlaying)) { ctx in
+            let spin = animated && np.isPlaying ? np.position(at: ctx.date) * 80.0 : 0.0
 
             HStack(spacing: 36) {
                 // CD Disc with Album Art Picture Disc
@@ -1866,7 +1866,7 @@ struct Constellation: View, Equatable {
 
     var body: some View {
         let k_scale = s.scale < 0.4 ? 0.7 : s.scale
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animated)) { ctx in
+        TimelineView(.animation(minimumInterval: PowerOptimizer.shared.animationInterval, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
             let t = animated ? ctx.date.timeIntervalSinceReferenceDate : pos
             Canvas { c, sz in
                 // 1. Ambient celestial micro-stars (ensures depth across all backgrounds and desktop mode)
@@ -2244,8 +2244,10 @@ struct LyricsView: View {
     var theme: LyricTheme { LyricTheme(rawValue: themeRaw) ?? .bigWords }
     /// Fill-style themes need smooth progress; the rest only change per word/line.
     var tick: Double {
+        guard np.isPlaying else { return 1.0 }
         let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars, .cyberpunk, .quantum, .prism, .aurora, .cassette, .spotlight, .magazine, .ipod, .matrix, .radar, .disc]
-        return smooth.contains(theme) ? 0.016 : 0.1
+        let interval = PowerOptimizer.shared.isLowPowerMode ? 0.033 : 0.016
+        return smooth.contains(theme) ? interval : 0.1
     }
     var style: LStyle {
         LStyle(font: fontStyle, scale: scale, align: alignKey == "left" ? .leading : .center,
