@@ -16,8 +16,8 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>CFBundleIdentifier</key><string>com.local.verse</string>
 <key>CFBundleName</key><string>Verse</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>2.1</string>
-<key>CFBundleVersion</key><string>2.1</string>
+<key>CFBundleShortVersionString</key><string>2.2</string>
+<key>CFBundleVersion</key><string>2.2</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleIconName</key><string>AppIcon</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
