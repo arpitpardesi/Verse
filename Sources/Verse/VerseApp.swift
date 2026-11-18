@@ -163,11 +163,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let extra: CGFloat = hasCity ? 48 : 0
             let w: CGFloat, h: CGFloat
             if shape == "classic" {
-                w = expanded ? max(480, nw + 260) : max(nw + 190, 340)
-                h = expanded ? nh + 250 + extra : nh + 28
+                w = expanded ? max(500, nw + 280) : max(nw + 190, 340)
+                h = expanded ? nh + 280 + extra : nh + 28
             } else {
-                w = expanded ? 460 : 400
-                h = expanded ? 268 + extra : 56
+                w = expanded ? 480 : 400
+                h = expanded ? 290 + extra : 56
             }
             let gap: CGFloat = shape == "classic" ? 0 : 10
             frame = NSRect(x: f.midX - w / 2, y: f.maxY - h - gap, width: w, height: h)

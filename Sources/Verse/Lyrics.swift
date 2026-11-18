@@ -6,7 +6,7 @@ struct LyricLine: Identifiable, Equatable {
     let text: String
 }
 
-enum LyricsState {
+enum LyricsState: Equatable {
     case idle, loading, none
     case plain(String)
     case synced([LyricLine])
