@@ -22,7 +22,7 @@ extension Notification.Name {
 }
 
 enum LyricTheme: String, CaseIterable, Identifiable {
-    case bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc
+    case bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc, cotodamaCanvas, cotodamaFlow, cotodamaBeat, cotodamaBox
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -61,6 +61,10 @@ enum LyricTheme: String, CaseIterable, Identifiable {
         case .matrix: return "Matrix"
         case .radar: return "Radar"
         case .disc: return "CD Disc"
+        case .cotodamaCanvas: return "Cotodama Canvas"
+        case .cotodamaFlow: return "Cotodama Flow"
+        case .cotodamaBeat: return "Cotodama Kinetic"
+        case .cotodamaBox: return "Cotodama Box"
         }
     }
 }

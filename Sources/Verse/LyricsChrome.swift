@@ -72,6 +72,12 @@ struct LyricsContainer: View {
             // Theme & View Menus
             HStack(spacing: 8) {
                 Menu {
+                    Section("COTODAMA Lyric Speaker") {
+                        Button("Cotodama Canvas") { theme = LyricTheme.cotodamaCanvas.rawValue }
+                        Button("Cotodama Flow") { theme = LyricTheme.cotodamaFlow.rawValue }
+                        Button("Cotodama Kinetic") { theme = LyricTheme.cotodamaBeat.rawValue }
+                        Button("Cotodama Box") { theme = LyricTheme.cotodamaBox.rawValue }
+                    }
                     Section("Featured Themes") {
                         Button("Big Words") { theme = LyricTheme.bigWord.rawValue }
                         Button("Karaoke") { theme = LyricTheme.karaoke.rawValue }

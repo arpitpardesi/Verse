@@ -492,6 +492,14 @@ struct ThemeBackground: View {
             RadarBackground(animated: animated)
         case .disc:
             DiscBackground(animated: animated)
+        case .cotodamaCanvas:
+            CotodamaCanvasBackground(tint: c0, animated: animated)
+        case .cotodamaFlow:
+            CotodamaFlowBackground(c0: c0, c1: c1, animated: animated)
+        case .cotodamaBeat:
+            CotodamaBeatBackground(tint: c0, animated: animated)
+        case .cotodamaBox:
+            CotodamaBoxBackground(tint: c0, animated: animated)
         case .aura where !animated:
             ZStack {
                 Color.black
@@ -1394,6 +1402,29 @@ struct SyncedLyrics: View {
             CompactDiscView(cur: cur, next: text(index + 1), index: index + 1, total: lines.count, progress: progress, accent: s.accent, animated: animated, s: s)
                 .id(index)
                 .transition(.scale(scale: 0.94).combined(with: .opacity))
+
+        case .cotodamaCanvas:
+            CotodamaCanvasView(cur: cur, next: text(index + 1), index: index, progress: progress, accent: s.accent, animated: animated, s: s)
+                .id(index)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .scale(scale: 0.96)),
+                    removal: .opacity.combined(with: .scale(scale: 1.02))
+                ))
+
+        case .cotodamaFlow:
+            CotodamaFlowView(cur: cur, prev: text(index - 1), next: text(index + 1), index: index, progress: progress, accent: s.accent, animated: animated, s: s)
+                .id(index)
+                .transition(.opacity)
+
+        case .cotodamaBeat:
+            CotodamaBeatView(cur: cur, next: text(index + 1), index: index, progress: progress, accent: s.accent, animated: animated, s: s)
+                .id(index)
+                .transition(.scale(scale: 1.04).combined(with: .opacity))
+
+        case .cotodamaBox:
+            CotodamaBoxView(cur: cur, next: text(index + 1), index: index, progress: progress, accent: s.accent, animated: animated, s: s)
+                .id(index)
+                .transition(.opacity)
         }
     }
 }
@@ -2224,6 +2255,594 @@ struct FlowLayout: Layout {
     }
 }
 
+// MARK: - COTODAMA Lyric Speaker Themes
+
+// 1. COTODAMA CANVAS
+struct CotodamaCanvasBackground: View {
+    var tint: Color = .white
+    var animated: Bool = true
+
+    var body: some View {
+        ZStack {
+            // Fine Gallery Matte Slate Canvas Base
+            Color(red: 0.08, green: 0.082, blue: 0.09)
+
+            // Subtle Architectural Grid & Registration Hairlines
+            Canvas { c, size in
+                let w = size.width, h = size.height
+                var gridPath = Path()
+                for y in stride(from: 40.0, to: h - 30.0, by: 40.0) {
+                    gridPath.move(to: CGPoint(x: 30, y: y))
+                    gridPath.addLine(to: CGPoint(x: w - 30, y: y))
+                }
+                for x in stride(from: 40.0, to: w - 30.0, by: 60.0) {
+                    gridPath.move(to: CGPoint(x: x, y: 30))
+                    gridPath.addLine(to: CGPoint(x: x, y: h - 30))
+                }
+                c.stroke(gridPath, with: .color(Color.white.opacity(0.025)), lineWidth: 0.5)
+
+                // Corner Registration Marks (+)
+                let corners: [CGPoint] = [
+                    CGPoint(x: 28, y: 28),
+                    CGPoint(x: w - 28, y: 28),
+                    CGPoint(x: 28, y: h - 28),
+                    CGPoint(x: w - 28, y: h - 28)
+                ]
+                for pt in corners {
+                    var cross = Path()
+                    cross.move(to: CGPoint(x: pt.x - 7, y: pt.y))
+                    cross.addLine(to: CGPoint(x: pt.x + 7, y: pt.y))
+                    cross.move(to: CGPoint(x: pt.x, y: pt.y - 7))
+                    cross.addLine(to: CGPoint(x: pt.x, y: pt.y + 7))
+                    c.stroke(cross, with: .color(Color.white.opacity(0.28)), lineWidth: 1.0)
+                }
+            }
+
+            // Ambient Subtle Light Wash
+            RadialGradient(
+                colors: [tint.opacity(0.08), .clear],
+                center: .center,
+                startRadius: 0,
+                endRadius: 400
+            )
+
+            // Technical Headers & Labels
+            VStack {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("COTODAMA // LYRIC SYNC TECHNOLOGY")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.5))
+                        Text("AIST JAPAN COOP // MOTION GRAPHIC ENGINE")
+                            .font(.system(size: 8, weight: .medium, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.28))
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Circle().fill(NowPlaying.shared.isPlaying ? Color.green : Color.orange)
+                            .frame(width: 5, height: 5)
+                        Text("CANVAS DUAL-BOARD")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.45))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.05), in: Capsule())
+                    .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 0.6))
+                }
+                .padding(.horizontal, 36)
+                .padding(.top, 24)
+
+                Spacer()
+
+                // Bottom Footer Spec
+                HStack {
+                    Text("MODEL: LSC-01 // JAPAN DESIGN // ACOUSTIC CANV-02")
+                        .font(.system(size: 8, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                    Spacer()
+                    Text("GRAPHIC IMPRESSION MAPPING")
+                        .font(.system(size: 8, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                }
+                .padding(.horizontal, 36)
+                .padding(.bottom, 22)
+            }
+        }
+    }
+}
+
+struct CotodamaCanvasView: View {
+    let cur: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        let words = cur.split(separator: " ").map(String.init)
+        let activeIdx = words.isEmpty ? 0 : min(words.count - 1, Int(progress * Double(words.count)))
+
+        VStack(spacing: 24) {
+            Spacer()
+
+            if words.isEmpty {
+                VStack(spacing: 12) {
+                    HStack(spacing: 8) {
+                        Rectangle().fill(accent).frame(width: 14, height: 2)
+                        Text("COTODAMA LYRIC SPEAKER")
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                        Rectangle().fill(accent).frame(width: 14, height: 2)
+                    }
+                    Text("♪")
+                        .font(.system(size: 38, weight: .thin))
+                        .foregroundStyle(.white.opacity(0.3))
+                }
+            } else {
+                // Cotodama Dynamic Kinetic Typography Grid
+                VStack(alignment: s.align == .leading ? .leading : .center, spacing: 14) {
+                    let mid = max(1, (words.count + 1) / 2)
+                    let row1 = Array(words.prefix(mid))
+                    let row2 = Array(words.dropFirst(mid))
+
+                    // Row 1
+                    HStack(spacing: 12) {
+                        ForEach(Array(row1.enumerated()), id: \.offset) { i, w in
+                            let isCur = i == activeIdx
+                            let isPast = i < activeIdx
+                            Text(s.upper ? w.uppercased() : w)
+                                .font(s.f(isCur ? 56 : (row2.isEmpty ? 50 : 38), isCur ? .black : (isPast ? .bold : .medium)))
+                                .foregroundStyle(isCur ? Color.white : (isPast ? Color.white.opacity(0.85) : Color.white.opacity(0.28)))
+                                .scaleEffect(isCur ? 1.05 : 1.0)
+                                .overlay(alignment: .bottom) {
+                                    if isCur {
+                                        Rectangle()
+                                            .fill(accent)
+                                            .frame(height: 3)
+                                            .offset(y: 4)
+                                    }
+                                }
+                                .animation(.spring(response: 0.25, dampingFraction: 0.72), value: activeIdx)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: s.align == .leading ? .leading : .center)
+
+                    // Row 2 (if words > 1)
+                    if !row2.isEmpty {
+                        HStack(spacing: 12) {
+                            ForEach(Array(row2.enumerated()), id: \.offset) { j, w in
+                                let i = mid + j
+                                let isCur = i == activeIdx
+                                let isPast = i < activeIdx
+                                Text(s.upper ? w.uppercased() : w)
+                                    .font(s.f(isCur ? 56 : 38, isCur ? .black : (isPast ? .bold : .medium)))
+                                    .foregroundStyle(isCur ? Color.white : (isPast ? Color.white.opacity(0.85) : Color.white.opacity(0.28)))
+                                    .scaleEffect(isCur ? 1.05 : 1.0)
+                                    .overlay(alignment: .bottom) {
+                                        if isCur {
+                                            Rectangle()
+                                                .fill(accent)
+                                                .frame(height: 3)
+                                                .offset(y: 4)
+                                        }
+                                    }
+                                    .animation(.spring(response: 0.25, dampingFraction: 0.72), value: activeIdx)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: s.align == .leading ? .leading : .center)
+                    }
+                }
+                .padding(.horizontal, 48)
+            }
+
+            Spacer()
+
+            // Next Line Monospace Teaser
+            if !next.isEmpty {
+                HStack(spacing: 6) {
+                    Text("NEXT //")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(accent.opacity(0.7))
+                    Text(next)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(Color.white.opacity(0.3))
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(Color.white.opacity(0.04), in: Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 0.7))
+                .padding(.bottom, 24)
+            }
+        }
+    }
+}
+
+// 2. COTODAMA FLOW (Poetic Ballad & Acoustic Motion)
+struct CotodamaFlowBackground: View {
+    var c0: Color
+    var c1: Color
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            ZStack {
+                // Smoked Glass Base
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.035, green: 0.038, blue: 0.06),
+                        Color(red: 0.015, green: 0.018, blue: 0.03)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                // Ethereal Floating Liquid Light Orbs
+                let ox1 = sin(t * 0.4) * 160
+                let oy1 = cos(t * 0.35) * 90
+                Circle()
+                    .fill(c0.opacity(0.22))
+                    .frame(width: 320, height: 320)
+                    .blur(radius: 80)
+                    .offset(x: CGFloat(ox1), y: CGFloat(oy1))
+
+                let ox2 = cos(t * 0.38) * 150
+                let oy2 = sin(t * 0.45) * 80
+                Circle()
+                    .fill(c1.opacity(0.18))
+                    .frame(width: 280, height: 280)
+                    .blur(radius: 70)
+                    .offset(x: CGFloat(ox2), y: CGFloat(oy2))
+            }
+        }
+    }
+}
+
+struct CotodamaFlowView: View {
+    let cur: String
+    let prev: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+
+            VStack(spacing: 24) {
+                Spacer()
+
+                // Previous Line Dissolving Upwards
+                if !prev.isEmpty {
+                    Text(prev)
+                        .font(.system(size: 20 * CGFloat(s.scale), weight: .light, design: .serif))
+                        .foregroundStyle(Color.white.opacity(0.2))
+                        .multilineTextAlignment(.center)
+                        .blur(radius: 1.2)
+                        .offset(y: -8)
+                        .lineLimit(1)
+                }
+
+                // Active Hero Lyric Line: Liquid Floating Typography with Ethereal Aura
+                ZStack {
+                    // Ethereal Blurred Aura
+                    Text(s.upper ? cur.uppercased() : cur)
+                        .font(.system(size: 44 * CGFloat(s.scale), weight: .regular, design: .serif))
+                        .foregroundStyle(accent.opacity(0.55))
+                        .blur(radius: 16)
+                        .offset(y: CGFloat(sin(t * 1.6) * 3))
+
+                    // Synchronized Filling Text
+                    FillText(
+                        text: s.upper ? cur.uppercased() : cur,
+                        p: progress,
+                        on: Color.white,
+                        off: Color.white.opacity(0.38)
+                    )
+                    .font(.system(size: 44 * CGFloat(s.scale), weight: .regular, design: .serif))
+                    .shadow(color: Color.black.opacity(0.4), radius: 6, y: 3)
+                    .offset(y: CGFloat(sin(t * 1.6) * 3))
+                }
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 48)
+
+                // Upcoming Line Floating Below
+                if !next.isEmpty {
+                    Text(next)
+                        .font(.system(size: 20 * CGFloat(s.scale), weight: .light, design: .serif))
+                        .foregroundStyle(Color.white.opacity(0.2))
+                        .multilineTextAlignment(.center)
+                        .blur(radius: 1.2)
+                        .offset(y: 8)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
+        }
+    }
+}
+
+// 3. COTODAMA KINETIC (High-Energy Rock / Pop / Strobe)
+struct CotodamaBeatBackground: View {
+    var tint: Color = .white
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            let beatPulse = abs(sin(t * 3.5))
+
+            ZStack {
+                // Stark Obsidian Canvas
+                Color(red: 0.02, green: 0.02, blue: 0.025)
+
+                // Flashing Minimalist Hairline Cross
+                Canvas { c, size in
+                    let w = size.width, h = size.height
+                    var p = Path()
+                    p.move(to: CGPoint(x: 0, y: h * 0.5))
+                    p.addLine(to: CGPoint(x: w, y: h * 0.5))
+                    p.move(to: CGPoint(x: w * 0.5, y: 0))
+                    p.addLine(to: CGPoint(x: w * 0.5, y: h))
+                    c.stroke(p, with: .color(Color.white.opacity(0.04 + 0.04 * beatPulse)), lineWidth: 0.8)
+                }
+
+                // Geometric Corner Framing Brackets
+                VStack {
+                    HStack {
+                        Text("[ 01 // KINETIC STROBE ]")
+                            .font(.system(size: 9, weight: .heavy, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.45))
+                        Spacer()
+                        HStack(spacing: 4) {
+                            ForEach(0..<4, id: \.self) { i in
+                                Rectangle()
+                                    .fill(tint.opacity(Double(i) * 0.25 + 0.25))
+                                    .frame(width: 3, height: 10 + CGFloat(sin(t * 8 + Double(i)) * 6))
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 24)
+
+                    Spacer()
+
+                    HStack {
+                        Text("TEMPO IMPRESSION SYNC")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.25))
+                        Spacer()
+                        Text("COTODAMA // TOKYO")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.25))
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 22)
+                }
+            }
+        }
+    }
+}
+
+struct CotodamaBeatView: View {
+    let cur: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        let words = cur.split(separator: " ").map(String.init)
+        let activeIdx = words.isEmpty ? 0 : min(words.count - 1, Int(progress * Double(words.count)))
+
+        VStack(spacing: 28) {
+            Spacer()
+
+            if words.isEmpty {
+                Text("♪")
+                    .font(.system(size: 64, weight: .black))
+                    .foregroundStyle(.white.opacity(0.3))
+            } else {
+                // High-Contrast Inverted Block Typography Flow
+                FlowLayout(spacing: 12) {
+                    ForEach(Array(words.enumerated()), id: \.offset) { i, w in
+                        let isCur = i == activeIdx
+                        let isPast = i < activeIdx
+
+                        Text(s.upper ? w.uppercased() : w)
+                            .font(.system(size: (isCur ? 48 : 40) * CGFloat(s.scale), weight: .black, design: .default))
+                            .foregroundStyle(isCur ? Color.black : (isPast ? Color.white : Color.white.opacity(0.3)))
+                            .padding(.horizontal, isCur ? 14 : 0)
+                            .padding(.vertical, isCur ? 6 : 0)
+                            .background(
+                                Group {
+                                    if isCur {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(Color.white)
+                                            .shadow(color: Color.white.opacity(0.5), radius: 8)
+                                    }
+                                }
+                            )
+                            .animation(.spring(response: 0.18, dampingFraction: 0.65), value: activeIdx)
+                    }
+                }
+                .padding(.horizontal, 44)
+            }
+
+            Spacer()
+
+            if !next.isEmpty {
+                Text(next.uppercased())
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.22))
+                    .padding(.bottom, 28)
+            }
+        }
+    }
+}
+
+// 4. COTODAMA BOX (Transparent Acrylic Cabinet & Acoustic Drivers)
+struct CotodamaBoxBackground: View {
+    var tint: Color = .white
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            let excursion = NowPlaying.shared.isPlaying ? CGFloat(sin(t * 10) * 3) : 0
+
+            ZStack {
+                // Smoked Acrylic Cabinet Base
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.05, green: 0.055, blue: 0.07),
+                        Color(red: 0.02, green: 0.022, blue: 0.03)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                // Background Acoustic Drivers (Visible through transparent LCD)
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    let h = geo.size.height
+                    let centerX = w / 2
+                    let centerY = h / 2
+
+                    ZStack {
+                        // 1. High-Frequency Tweeter (Top)
+                        ZStack {
+                            Circle().fill(Color(white: 0.12)).frame(width: 80, height: 80)
+                            Circle().stroke(Color.white.opacity(0.15), lineWidth: 2).frame(width: 80, height: 80)
+                            Circle().fill(RadialGradient(colors: [Color(white: 0.3), Color(white: 0.08)], center: .center, startRadius: 0, endRadius: 28)).frame(width: 56, height: 56)
+                            Circle().fill(Color.white.opacity(0.25)).frame(width: 14, height: 14)
+                        }
+                        .position(x: centerX, y: centerY - 110)
+
+                        // 2. Bass Woofer Driver with Voice Coil Ridges (Bottom)
+                        ZStack {
+                            // Driver basket outer ring
+                            Circle().fill(Color(white: 0.09)).frame(width: 190, height: 190)
+                            Circle().stroke(Color.white.opacity(0.12), lineWidth: 2.5).frame(width: 190, height: 190)
+
+                            // Concentric voice coil ridges
+                            ForEach(0..<4, id: \.self) { i in
+                                Circle()
+                                    .stroke(Color.white.opacity(0.06), lineWidth: 1.5)
+                                    .frame(width: 160 - CGFloat(i * 26) + excursion,
+                                           height: 160 - CGFloat(i * 26) + excursion)
+                            }
+
+                            // Center dust cap (pulses with excursion)
+                            Circle()
+                                .fill(RadialGradient(colors: [Color(white: 0.22), Color(white: 0.06)], center: .center, startRadius: 0, endRadius: 32))
+                                .frame(width: 58 + excursion * 1.5, height: 58 + excursion * 1.5)
+                                .shadow(color: Color.black.opacity(0.6), radius: 6)
+                        }
+                        .position(x: centerX, y: centerY + 80)
+                    }
+                }
+
+                // Fine Transparent LCD Dot-Matrix Overlay
+                Canvas { c, size in
+                    let step: CGFloat = 8.0
+                    for y in stride(from: 4.0, to: size.height, by: step) {
+                        for x in stride(from: 4.0, to: size.width, by: step) {
+                            c.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1.2, height: 1.2)),
+                                   with: .color(Color.white.opacity(0.04)))
+                        }
+                    }
+                }
+
+                // Top & Bottom Cabinet Acrylic Rim
+                VStack {
+                    HStack {
+                        Text("COTODAMA // LYRIC SPEAKER BOX")
+                            .font(.system(size: 9, weight: .heavy, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.55))
+                        Spacer()
+                        Text("TRANSPARENT LCD // DUAL ACOUSTIC")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.35))
+                    }
+                    .padding(.horizontal, 36)
+                    .padding(.top, 24)
+
+                    Spacer()
+
+                    // Bottom Equalizer Strip
+                    HStack(spacing: 3) {
+                        ForEach(0..<16, id: \.self) { i in
+                            let h = NowPlaying.shared.isPlaying ? max(4, CGFloat(abs(sin(t * 4 + Double(i) * 0.4)) * 14)) : 4
+                            Capsule()
+                                .fill(LinearGradient(colors: [tint, tint.opacity(0.5)], startPoint: .top, endPoint: .bottom))
+                                .frame(width: 2.5, height: h)
+                        }
+                    }
+                    .padding(.bottom, 22)
+                }
+            }
+        }
+    }
+}
+
+struct CotodamaBoxView: View {
+    let cur: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            // Suspended LCD Floating Typography
+            ZStack {
+                // Subtle LCD Ghost Reflection
+                Text(s.upper ? cur.uppercased() : cur)
+                    .font(.system(size: 40 * CGFloat(s.scale), weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.white.opacity(0.18))
+                    .offset(x: 2, y: 3)
+
+                // Sharp Foreground Floating Text
+                FillText(
+                    text: s.upper ? cur.uppercased() : cur,
+                    p: progress,
+                    on: Color.white,
+                    off: Color.white.opacity(0.4)
+                )
+                .font(.system(size: 40 * CGFloat(s.scale), weight: .heavy, design: .rounded))
+                .shadow(color: Color.black.opacity(0.65), radius: 8, y: 4)
+            }
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 48)
+
+            Spacer()
+
+            if !next.isEmpty {
+                Text(next)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Color.white.opacity(0.28))
+                    .lineLimit(1)
+                    .padding(.bottom, 32)
+            }
+        }
+    }
+}
+
 struct LyricsView: View {
     @ObservedObject var lyrics = LyricsStore.shared
     @ObservedObject var np = NowPlaying.shared
@@ -2245,7 +2864,7 @@ struct LyricsView: View {
     /// Fill-style themes need smooth progress; the rest only change per word/line.
     var tick: Double {
         guard np.isPlaying else { return 1.0 }
-        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars, .cyberpunk, .quantum, .prism, .aurora, .cassette, .spotlight, .magazine, .ipod, .matrix, .radar, .disc]
+        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars, .cyberpunk, .quantum, .prism, .aurora, .cassette, .spotlight, .magazine, .ipod, .matrix, .radar, .disc, .cotodamaCanvas, .cotodamaFlow, .cotodamaBeat, .cotodamaBox]
         let interval = PowerOptimizer.shared.isLowPowerMode ? 0.033 : 0.016
         return smooth.contains(theme) ? interval : 0.1
     }
