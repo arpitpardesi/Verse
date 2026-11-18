@@ -22,10 +22,15 @@ extension Notification.Name {
 }
 
 enum LyricTheme: String, CaseIterable, Identifiable {
-    case bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc, cotodamaCanvas, cotodamaFlow, cotodamaBeat, cotodamaBox
+    case cotodama, cotodamaCanvas, cotodamaBox, cotodamaFlow, cotodamaBeat, bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc
     var id: String { rawValue }
     var title: String {
         switch self {
+        case .cotodama: return "COTODAMA Lyric Sync"
+        case .cotodamaCanvas: return "Cotodama Canvas Edition"
+        case .cotodamaBox: return "Cotodama Box Edition"
+        case .cotodamaFlow: return "Cotodama Ballad Mode"
+        case .cotodamaBeat: return "Cotodama Kinetic Mode"
         case .bigWord: return "Big Words"
         case .jumble: return "Jumble"
         case .metric: return "Metric"
@@ -61,10 +66,6 @@ enum LyricTheme: String, CaseIterable, Identifiable {
         case .matrix: return "Matrix"
         case .radar: return "Radar"
         case .disc: return "CD Disc"
-        case .cotodamaCanvas: return "Cotodama Canvas"
-        case .cotodamaFlow: return "Cotodama Flow"
-        case .cotodamaBeat: return "Cotodama Kinetic"
-        case .cotodamaBox: return "Cotodama Box"
         }
     }
 }

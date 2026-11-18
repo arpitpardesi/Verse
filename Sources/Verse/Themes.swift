@@ -492,6 +492,8 @@ struct ThemeBackground: View {
             RadarBackground(animated: animated)
         case .disc:
             DiscBackground(animated: animated)
+        case .cotodama:
+            CotodamaAdaptiveBackground(c0: c0, c1: c1, animated: animated)
         case .cotodamaCanvas:
             CotodamaCanvasBackground(tint: c0, animated: animated)
         case .cotodamaFlow:
@@ -1402,6 +1404,11 @@ struct SyncedLyrics: View {
             CompactDiscView(cur: cur, next: text(index + 1), index: index + 1, total: lines.count, progress: progress, accent: s.accent, animated: animated, s: s)
                 .id(index)
                 .transition(.scale(scale: 0.94).combined(with: .opacity))
+
+        case .cotodama:
+            CotodamaAdaptiveView(cur: cur, prev: text(index - 1), next: text(index + 1), index: index, progress: progress, accent: s.accent, animated: animated, s: s, lines: lines, pos: pos)
+                .id(index)
+                .transition(.opacity)
 
         case .cotodamaCanvas:
             CotodamaCanvasView(cur: cur, next: text(index + 1), index: index, progress: progress, accent: s.accent, animated: animated, s: s)
@@ -2857,6 +2864,246 @@ struct CotodamaBoxView: View {
     }
 }
 
+// MARK: - COTODAMA Lyric Sync Technology (AIST Adaptive Engine)
+
+enum CotodamaMood {
+    case ballad       // Slow, emotional, intimate, acoustic
+    case energetic    // High BPM, rock, hip-hop, electronic, fast pop
+    case groove       // Mid-tempo, R&B, modern pop
+    case instrumental // Solos, intros, interludes with no active vocal
+}
+
+struct CotodamaAnalysis {
+    var mood: CotodamaMood
+    var intensity: Double
+    var wordsPerSecond: Double
+    var isInstrumental: Bool
+}
+
+@MainActor
+func analyzeCotodamaSong(lines: [LyricLine], index: Int, pos: Double, np: NowPlaying) -> CotodamaAnalysis {
+    // 1. Check for instrumental intro or interlude
+    if lines.isEmpty {
+        return CotodamaAnalysis(mood: .instrumental, intensity: 0.5, wordsPerSecond: 0, isInstrumental: true)
+    }
+
+    // Check if we are before first line (intro)
+    if index < 0 || (index == 0 && pos < lines[0].time - 1.2) {
+        return CotodamaAnalysis(mood: .instrumental, intensity: 0.5, wordsPerSecond: 0, isInstrumental: true)
+    }
+
+    guard index >= 0, index < lines.count else {
+        return CotodamaAnalysis(mood: .instrumental, intensity: 0.4, wordsPerSecond: 0, isInstrumental: true)
+    }
+
+    let curLine = lines[index]
+    let nextTime = (index + 1 < lines.count) ? lines[index + 1].time : (np.track?.duration ?? curLine.time + 10)
+    let lineDur = max(0.5, nextTime - curLine.time)
+    let words = curLine.text.split(separator: " ")
+
+    // If current line has ended and there's a gap of > 3.0s before next line -> Instrumental solo/interlude!
+    let wordsApproxDur = max(1.5, Double(words.count) * 0.42)
+    if pos > (curLine.time + wordsApproxDur) && (nextTime - pos) > 3.0 {
+        let snap = AudioReactor.shared.snapshot()
+        let energy = snap.active ? (snap.level * 0.5 + snap.low * 0.5) : 0.5
+        return CotodamaAnalysis(mood: .instrumental, intensity: energy, wordsPerSecond: 0, isInstrumental: true)
+    }
+
+    // 2. Calculate cadence (words per second)
+    let wps = Double(words.count) / lineDur
+
+    // 3. Audio energy from hardware stream
+    let snap = AudioReactor.shared.snapshot()
+    let audioEnergy = snap.active ? (snap.level * 0.6 + snap.low * 0.4) : 0.4
+
+    // 4. Combined mood score
+    let score = min(1.0, max(0.0, (wps / 2.8) * 0.65 + audioEnergy * 0.35))
+
+    let mood: CotodamaMood
+    if score < 0.38 {
+        mood = .ballad
+    } else if score > 0.62 {
+        mood = .energetic
+    } else {
+        mood = .groove
+    }
+
+    return CotodamaAnalysis(mood: mood, intensity: score, wordsPerSecond: wps, isInstrumental: false)
+}
+
+struct CotodamaInstrumentalVisualizer: View {
+    var accent: Color = .white
+    var intensity: Double = 0.5
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            let snap = AudioReactor.shared.snapshot()
+            let liveLow = snap.active ? snap.low : (0.4 + 0.3 * abs(sin(t * 3)))
+            let liveLevel = snap.active ? snap.level : (0.5 + 0.3 * abs(sin(t * 2.2)))
+
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+                let center = CGPoint(x: w / 2, y: h / 2)
+
+                ZStack {
+                    // Concentric Acoustic Diaphragm Rings expanding outward
+                    ForEach(0..<5, id: \.self) { i in
+                        let phase = (t * 0.8 + Double(i) * 0.2).truncatingRemainder(dividingBy: 1.0)
+                        let r = min(w, h) * 0.15 + (min(w, h) * 0.42 * CGFloat(phase))
+                        let alpha = (1.0 - phase) * 0.45 * (0.6 + liveLow * 0.4)
+
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [accent.opacity(alpha), Color.white.opacity(alpha * 0.5)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: max(1.0, 3.0 * (1.0 - CGFloat(phase)))
+                            )
+                            .frame(width: r * 2, height: r * 2)
+                            .position(center)
+                    }
+
+                    // Center Acoustic Core Dot
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 8 + liveLow * 12, height: 8 + liveLow * 12)
+                        .shadow(color: accent, radius: 10)
+                        .position(center)
+
+                    // Audio-Reactive Radial Waveform Spokes
+                    Canvas { c, size in
+                        let cX = size.width / 2
+                        let cY = size.height / 2
+                        let baseR = min(size.width, size.height) * 0.16
+                        let numBars = 32
+
+                        for b in 0..<numBars {
+                            let angle = (Double(b) / Double(numBars)) * .pi * 2.0
+                            let waveVal = abs(sin(t * 4 + Double(b) * 0.5)) * CGFloat(liveLevel) * 35.0
+                            let innerX = cX + (baseR + 4) * CGFloat(cos(angle))
+                            let innerY = cY + (baseR + 4) * CGFloat(sin(angle))
+                            let outerX = cX + (baseR + 10 + waveVal) * CGFloat(cos(angle))
+                            let outerY = cY + (baseR + 10 + waveVal) * CGFloat(sin(angle))
+
+                            var spoke = Path()
+                            spoke.move(to: CGPoint(x: innerX, y: innerY))
+                            spoke.addLine(to: CGPoint(x: outerX, y: outerY))
+                            c.stroke(spoke, with: .color(Color.white.opacity(0.4)), lineWidth: 1.5)
+                        }
+                    }
+
+                    // Technical Cotodama Telemetry
+                    VStack(spacing: 8) {
+                        Spacer()
+
+                        HStack(spacing: 8) {
+                            Rectangle().fill(accent).frame(width: 14, height: 2)
+                            Text("COTODAMA // LYRIC SYNC TECHNOLOGY")
+                                .font(.system(size: 9, weight: .heavy, design: .monospaced))
+                                .foregroundStyle(Color.white.opacity(0.65))
+                            Rectangle().fill(accent).frame(width: 14, height: 2)
+                        }
+
+                        Text("INSTRUMENTAL INTERLUDE // ACOUSTIC MOTION")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.white.opacity(0.4))
+
+                        // Live audio frequency readout
+                        HStack(spacing: 4) {
+                            ForEach(0..<12, id: \.self) { barIdx in
+                                let barH = 4.0 + CGFloat(liveLevel * 14.0 * abs(sin(t * 5 + Double(barIdx) * 0.4)))
+                                Capsule()
+                                    .fill(accent.opacity(0.8))
+                                    .frame(width: 2.5, height: barH)
+                            }
+                        }
+                        .padding(.top, 4)
+
+                        Spacer().frame(height: 36)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct CotodamaAdaptiveBackground: View {
+    var c0: Color
+    var c1: Color
+    var animated: Bool = true
+
+    @ViewBuilder
+    private func adaptiveContent(date: Date) -> some View {
+        let pos = NowPlaying.shared.position(at: date) + LyricsStore.shared.totalOffset
+        let lines: [LyricLine] = {
+            if case .synced(let l) = LyricsStore.shared.state { return l }
+            return []
+        }()
+        let idx = lineIndex(lines, pos)
+        let analysis = analyzeCotodamaSong(lines: lines, index: idx, pos: pos, np: NowPlaying.shared)
+
+        switch analysis.mood {
+        case .ballad:
+            CotodamaFlowBackground(c0: c0, c1: c1, animated: animated)
+        case .energetic:
+            CotodamaBeatBackground(tint: c0, animated: animated)
+        case .groove, .instrumental:
+            CotodamaCanvasBackground(tint: c0, animated: animated)
+        }
+    }
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            adaptiveContent(date: ctx.date)
+        }
+    }
+}
+
+struct CotodamaAdaptiveView: View {
+    let cur: String
+    let prev: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+    let lines: [LyricLine]
+    let pos: Double
+
+    var body: some View {
+        let analysis = analyzeCotodamaSong(lines: lines, index: index, pos: pos, np: NowPlaying.shared)
+
+        Group {
+            if analysis.isInstrumental {
+                CotodamaInstrumentalVisualizer(accent: accent, intensity: analysis.intensity, animated: animated)
+                    .transition(.opacity)
+            } else {
+                switch analysis.mood {
+                case .ballad:
+                    CotodamaFlowView(cur: cur, prev: prev, next: next, index: index, progress: progress, accent: accent, animated: animated, s: s)
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .scale(scale: 0.98)), removal: .opacity))
+                case .energetic:
+                    CotodamaBeatView(cur: cur, next: next, index: index, progress: progress, accent: accent, animated: animated, s: s)
+                        .transition(.asymmetric(insertion: .scale(scale: 1.03).combined(with: .opacity), removal: .opacity))
+                case .groove:
+                    CotodamaCanvasView(cur: cur, next: next, index: index, progress: progress, accent: accent, animated: animated, s: s)
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .scale(scale: 0.96)), removal: .opacity))
+                case .instrumental:
+                    CotodamaInstrumentalVisualizer(accent: accent, intensity: analysis.intensity, animated: animated)
+                        .transition(.opacity)
+                }
+            }
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: analysis.mood)
+    }
+}
+
 struct LyricsView: View {
     @ObservedObject var lyrics = LyricsStore.shared
     @ObservedObject var np = NowPlaying.shared
@@ -2878,7 +3125,7 @@ struct LyricsView: View {
     /// Fill-style themes need smooth progress; the rest only change per word/line.
     var tick: Double {
         guard np.isPlaying else { return 1.0 }
-        let smooth: [LyricTheme] = [.karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars, .cyberpunk, .quantum, .prism, .aurora, .cassette, .spotlight, .magazine, .ipod, .matrix, .radar, .disc, .cotodamaCanvas, .cotodamaFlow, .cotodamaBeat, .cotodamaBox]
+        let smooth: [LyricTheme] = [.cotodama, .karaoke, .poster, .typewriter, .metric, .pop, .glitch, .cinema, .stars, .cyberpunk, .quantum, .prism, .aurora, .cassette, .spotlight, .magazine, .ipod, .matrix, .radar, .disc, .cotodamaCanvas, .cotodamaFlow, .cotodamaBeat, .cotodamaBox]
         let interval = PowerOptimizer.shared.isLowPowerMode ? 0.033 : 0.016
         return smooth.contains(theme) ? interval : 0.1
     }

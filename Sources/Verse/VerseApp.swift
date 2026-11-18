@@ -114,7 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             glowPanel?.orderOut(nil)
         }
 
-        if d.bool(forKey: K.glow) && (d.string(forKey: K.glowSync) ?? "audio") == "audio" {
+        let currentTheme = d.string(forKey: K.theme) ?? ""
+        let isCotodama = currentTheme.lowercased().contains("cotodama")
+        if (d.bool(forKey: K.glow) && (d.string(forKey: K.glowSync) ?? "audio") == "audio") || isCotodama {
             AudioReactor.shared.start()
         } else {
             AudioReactor.shared.stop()

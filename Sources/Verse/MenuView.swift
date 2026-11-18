@@ -391,9 +391,8 @@ struct MenuView: View {
             // Menu Dropdown
             Menu {
                 Section("COTODAMA Lyric Speaker") {
+                    themeItem(.cotodama)
                     themeItem(.cotodamaCanvas)
-                    themeItem(.cotodamaFlow)
-                    themeItem(.cotodamaBeat)
                     themeItem(.cotodamaBox)
                 }
 
