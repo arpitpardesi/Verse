@@ -22,15 +22,16 @@ extension Notification.Name {
 }
 
 enum LyricTheme: String, CaseIterable, Identifiable {
-    case cotodama, cotodamaCanvas, cotodamaBox, cotodamaFlow, cotodamaBeat, bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc
+    case cotodama, cotodamaCanvas, cotodamaFlow, cotodamaBeat, cotodamaBox, cotodamaVisualizer, bigWord, jumble, metric, wave, pop, echo, cinema, liquid, synthwave, vinyl, glitch, orbit, bigWords, karaoke, neon, terminal, aura, minimal, lens, stars, typewriter, poster, cyberpunk, quantum, whisper, zen, prism, aurora, cassette, spotlight, magazine, ipod, matrix, radar, disc
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .cotodama: return "COTODAMA Lyric Sync (Auto)"
-        case .cotodamaCanvas: return "Cotodama Canvas Edition"
-        case .cotodamaBox: return "Cotodama Box Edition"
-        case .cotodamaFlow: return "Cotodama Ballad Mode"
-        case .cotodamaBeat: return "Cotodama Kinetic Mode"
+        case .cotodama: return "COTODAMA (Lyric Sync Engine)"
+        case .cotodamaVisualizer: return "COTODAMA Visualizer"
+        case .cotodamaCanvas: return "Cotodama Canvas"
+        case .cotodamaFlow: return "Cotodama Flow"
+        case .cotodamaBeat: return "Cotodama Kinetic"
+        case .cotodamaBox: return "Cotodama Box"
         case .bigWord: return "Big Words"
         case .jumble: return "Jumble"
         case .metric: return "Metric"
@@ -66,15 +67,6 @@ enum LyricTheme: String, CaseIterable, Identifiable {
         case .matrix: return "Matrix"
         case .radar: return "Radar"
         case .disc: return "CD Disc"
-        }
-    }
-
-    var isCotodama: Bool {
-        switch self {
-        case .cotodama, .cotodamaCanvas, .cotodamaBox, .cotodamaFlow, .cotodamaBeat:
-            return true
-        default:
-            return false
         }
     }
 }

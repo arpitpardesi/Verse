@@ -60,6 +60,12 @@ final class LyricsStore: ObservableObject {
     /// Per-song offset + global latency setting (e.g. Bluetooth headphones).
     var totalOffset: Double { offset + UserDefaults.standard.double(forKey: "globalOffset") }
 
+    /// Helper returning synced lines array if state is .synced, else empty.
+    var syncedLines: [LyricLine] {
+        if case .synced(let lines) = state { return lines }
+        return []
+    }
+
     func nudge(_ d: Double) { offset = ((offset + d) * 10).rounded() / 10 }
 
     func load(_ track: Track?) {

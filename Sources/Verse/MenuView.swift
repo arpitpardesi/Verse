@@ -8,7 +8,7 @@ struct MenuView: View {
     @ObservedObject var updater = UpdateManager.shared
 
     @AppStorage(K.mode) private var mode = "island"
-    @AppStorage(K.theme) private var theme = LyricTheme.cotodama.rawValue
+    @AppStorage(K.theme) private var theme = LyricTheme.bigWord.rawValue
     @AppStorage(K.artLyrics) private var artLyrics = true
     @AppStorage(K.artIsland) private var artIsland = true
     @AppStorage(K.artEffect) private var artEffect = "aura"
@@ -392,7 +392,10 @@ struct MenuView: View {
             Menu {
                 Section("COTODAMA Lyric Speaker") {
                     themeItem(.cotodama)
+                    themeItem(.cotodamaVisualizer)
                     themeItem(.cotodamaCanvas)
+                    themeItem(.cotodamaFlow)
+                    themeItem(.cotodamaBeat)
                     themeItem(.cotodamaBox)
                 }
 
