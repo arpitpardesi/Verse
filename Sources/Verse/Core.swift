@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 enum AppInfo {
-    static let version = "2.2"
+    static let version = "2.2.1"
 }
 
 enum K {
