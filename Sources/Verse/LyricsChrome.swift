@@ -6,7 +6,7 @@ struct LyricsContainer: View {
     @ObservedObject var np = NowPlaying.shared
     @ObservedObject var lyrics = LyricsStore.shared
     @AppStorage(K.mode) private var mode = "island"
-    @AppStorage(K.theme) private var theme = LyricTheme.bigWord.rawValue
+    @AppStorage(K.theme) private var theme = LyricTheme.cotodama.rawValue
     @AppStorage(K.artLyrics) private var artOn = true
     @State private var hovering = false
     @State private var copiedCard = false

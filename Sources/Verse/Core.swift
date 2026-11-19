@@ -68,6 +68,15 @@ enum LyricTheme: String, CaseIterable, Identifiable {
         case .disc: return "CD Disc"
         }
     }
+
+    var isCotodama: Bool {
+        switch self {
+        case .cotodama, .cotodamaCanvas, .cotodamaBox, .cotodamaFlow, .cotodamaBeat:
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 struct Track: Equatable {

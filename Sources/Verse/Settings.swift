@@ -177,7 +177,7 @@ struct ThemeTile: View {
 }
 
 struct ThemesTab: View {
-    @AppStorage(K.theme) private var theme = LyricTheme.bigWord.rawValue
+    @AppStorage(K.theme) private var theme = LyricTheme.cotodama.rawValue
     @AppStorage(K.background) private var bg = "auto"
     @AppStorage(K.font) private var font = "rounded"
     @AppStorage(K.align) private var align = "center"
