@@ -2275,7 +2275,7 @@ enum CotodamaStyle: Equatable {
     case groove       // Smooth rounded sans, sliding underline capsule, flowing rhythm
     case kinetic      // Punchy monospaced/grotesque, micro-spring pops, rhythm cadence dots
     case ambient      // Ultra-light minimalist sans, wide-letter tracking, stardust drift
-    case instrumental // Lyric pause (>2.2s gap or intro/outro), generative sound horizon
+    case instrumental // Lyric pause (>2.0s gap or intro/outro), generative sound horizon
 }
 
 struct CotodamaAnalysis {
@@ -2305,39 +2305,40 @@ func analyzeCotodamaSong(lines: [LyricLine], index: Int, pos: Double, np: NowPla
     let lineDur = max(0.4, nextTime - curLine.time)
     let words = curLine.text.split(separator: " ")
 
-    // If current line ended and there is a gap of > 2.2s before next line -> Instrumental interlude / solo!
-    let wordsApproxDur = max(1.2, Double(words.count) * 0.38)
-    if pos > (curLine.time + wordsApproxDur) && (nextTime - pos) > 2.2 {
+    // If current line ended and there is a gap of > 2.0s before next line -> Instrumental interlude / solo!
+    let wordsApproxDur = max(1.0, Double(words.count) * 0.35)
+    if pos > (curLine.time + wordsApproxDur) && (nextTime - pos) > 2.0 {
         let snap = AudioReactor.shared.snapshot()
-        let energy = snap.active ? (snap.level * 0.6 + snap.low * 0.4) : 0.45
+        let energy = snap.active ? (Double(snap.level) * 0.6 + Double(snap.low) * 0.4) : 0.45
         return CotodamaAnalysis(style: .instrumental, intensity: energy, wps: 0, isInstrumental: true)
     }
 
     // 2. Real-time cadence (words per second)
     let wps = Double(words.count) / lineDur
 
-    // 3. Audio energy from hardware stream
+    // 3. Audio energy from hardware stream or procedural fallback
     let snap = AudioReactor.shared.snapshot()
-    let audioEnergy = snap.active ? (snap.level * 0.65 + snap.low * 0.35) : 0.4
+    let audioEnergy = snap.active ? (Double(snap.level) * 0.65 + Double(snap.low) * 0.35) : 0.45
 
     // 4. Track title & genre cues
     let title = (np.track?.title ?? "").lowercased()
     var energyBias = 0.0
-    if title.contains("acoustic") || title.contains("ballad") || title.contains("piano") || title.contains("slowed") {
-        energyBias -= 0.18
-    } else if title.contains("remix") || title.contains("club") || title.contains("fast") || title.contains("speed up") {
-        energyBias += 0.18
+    if title.contains("acoustic") || title.contains("ballad") || title.contains("piano") || title.contains("slowed") || title.contains("unplugged") {
+        energyBias -= 0.25
+    } else if title.contains("remix") || title.contains("club") || title.contains("fast") || title.contains("speed") || title.contains("rock") || title.contains("rap") {
+        energyBias += 0.25
     }
 
-    // 5. Composite score
-    let score = min(1.0, max(0.0, (wps / 2.7) * 0.6 + audioEnergy * 0.4 + energyBias))
+    // 5. Line density bias
+    let lengthBias: Double = words.count <= 3 ? -0.12 : (words.count >= 8 ? 0.12 : 0.0)
+
+    // 6. Composite score
+    let score = min(1.0, max(0.0, (wps / 2.5) * 0.55 + audioEnergy * 0.35 + energyBias + lengthBias))
 
     let style: CotodamaStyle
-    if score < 0.28 {
-        style = .ambient
-    } else if score < 0.45 {
+    if score < 0.35 {
         style = .ballad
-    } else if score > 0.68 {
+    } else if score > 0.65 {
         style = .kinetic
     } else {
         style = .groove
@@ -2346,12 +2347,348 @@ func analyzeCotodamaSong(lines: [LyricLine], index: Int, pos: Double, np: NowPla
     return CotodamaAnalysis(style: style, intensity: score, wps: wps, isInstrumental: false)
 }
 
-// MARK: - Generative Living Smoked Glass Canvas (Motion Graphics)
+// =============================================================================
+// 1. COTODAMA CANVAS EDITION (Leaning Dual-Board Fine Art Canvas)
+// =============================================================================
 
-struct CotodamaGenerativeBackground: View {
+struct CotodamaCanvasBackground: View {
+    var tint: Color = .white
+    var animated: Bool = true
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+
+            ZStack {
+                // Rear Acoustic Backplate: Deep architectural charcoal
+                Color(red: 0.035, green: 0.035, blue: 0.04)
+
+                // Top Gallery Track Light Wash (soft cone of warm light from above)
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.98, green: 0.96, blue: 0.92).opacity(0.07),
+                        .clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+
+                // The Leaning Front Canvas Board
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.055, green: 0.055, blue: 0.062),
+                                Color(red: 0.040, green: 0.040, blue: 0.046)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: max(200, w - 36), height: max(160, h - 28))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.14), Color.white.opacity(0.04)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1.0
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(0.65), radius: 24, x: 0, y: 12)
+
+                // Subtle gallery canvas bottom metadata badge
+                VStack {
+                    Spacer()
+                    HStack(spacing: 8) {
+                        Text("COTODAMA CANVAS")
+                            .font(.system(size: 8.5, weight: .semibold))
+                            .kerning(2.5)
+                            .foregroundStyle(Color.white.opacity(0.35))
+                        Rectangle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 12, height: 1)
+                        if let track = NowPlaying.shared.track {
+                            Text(track.title.uppercased())
+                                .font(.system(size: 8.5, weight: .light))
+                                .kerning(2.0)
+                                .foregroundStyle(Color.white.opacity(0.25))
+                                .lineLimit(1)
+                        }
+                    }
+                    .padding(.bottom, 22)
+                }
+            }
+        }
+    }
+}
+
+struct CotodamaCanvasView: View {
+    let cur: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let heroSize = max(15.0, min(22.0, 18.5 * CGFloat(s.scale)))
+            let compSize = max(11.0, min(15.0, 13.0 * CGFloat(s.scale)))
+
+            let words = cur.split(separator: " ").map(String.init)
+            let activeIdx = words.isEmpty ? 0 : min(words.count - 1, Int(progress * Double(words.count)))
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                if words.isEmpty {
+                    Text("…")
+                        .font(.system(size: heroSize, weight: .light))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                } else {
+                    VStack(alignment: s.align == .leading ? .leading : .center, spacing: 14) {
+                        // Fine Art Printed Typography layout
+                        FlowLayout(spacing: 9) {
+                            ForEach(Array(words.enumerated()), id: \.offset) { idx, word in
+                                let isCur = idx == activeIdx
+                                let isPast = idx < activeIdx
+
+                                VStack(spacing: 3) {
+                                    Text(s.upper ? word.uppercased() : word)
+                                        .font(.system(size: heroSize, weight: isCur ? .medium : .light, design: .default))
+                                        .kerning(1.2)
+                                        .foregroundStyle(
+                                            isCur ? Color(red: 0.98, green: 0.97, blue: 0.94) :
+                                            (isPast ? Color.white.opacity(0.72) : Color.white.opacity(0.24))
+                                        )
+                                        .scaleEffect(isCur ? 1.02 : 1.0)
+                                        .animation(.spring(response: 0.22, dampingFraction: 0.78), value: activeIdx)
+
+                                    // Minimalist solid ivory underline marker for the active word
+                                    Rectangle()
+                                        .fill(Color(red: 0.98, green: 0.97, blue: 0.94).opacity(isCur ? 0.95 : 0.0))
+                                        .frame(height: 1.5)
+                                        .animation(.spring(response: 0.22, dampingFraction: 0.78), value: isCur)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: w - 88)
+
+                        // Companion upcoming line printed softly below
+                        if !next.isEmpty {
+                            Text(s.upper ? next.uppercased() : next)
+                                .font(.system(size: compSize, weight: .regular, design: .default))
+                                .kerning(1.0)
+                                .foregroundStyle(Color.white.opacity(0.22))
+                                .lineLimit(1)
+                                .padding(.top, 14)
+                                .transition(.opacity)
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+            .frame(width: w, height: h)
+        }
+    }
+}
+
+// =============================================================================
+// 2. COTODAMA BOX EDITION (Transparent Smoked Acrylic 3D Cabinet)
+// =============================================================================
+
+struct CotodamaBoxBackground: View {
+    var tint: Color = .white
+    var animated: Bool = true
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: !animated || !NowPlaying.shared.isPlaying)) { ctx in
+            let t = animated ? ctx.date.timeIntervalSinceReferenceDate : 0
+            let snap = AudioReactor.shared.snapshot()
+            let energy = snap.active ? Double(snap.level) : (0.35 + 0.2 * sin(t * 2))
+
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+
+                ZStack {
+                    // Transparent Smoked Acrylic Cabinet Interior
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.045, green: 0.048, blue: 0.055),
+                            Color(red: 0.022, green: 0.024, blue: 0.030)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+
+                    // 1. Subtle 3D Glass Beveled Frame
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.16),
+                                    Color.white.opacity(0.04),
+                                    Color.white.opacity(0.09)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.2
+                        )
+                        .padding(8)
+
+                    // 2. Internal Horizontal Smoked Glass Shelf
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.clear, Color.white.opacity(0.06), .clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 1)
+                        .position(x: w / 2, y: h * 0.72)
+
+                    // 3. Precision Machined Acoustic Speaker Driver (Right side / Lower corner)
+                    let driverR = min(w, h) * 0.17
+                    let driverX = w - driverR - 24
+                    let driverY = h * 0.5
+
+                    ZStack {
+                        // Outer driver housing ring
+                        Circle()
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1.5)
+                            .frame(width: driverR * 2, height: driverR * 2)
+
+                        // Acoustic suspension ring (breathes with audio)
+                        let pulseR = driverR * 1.55 + CGFloat(energy * 3.0)
+                        Circle()
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1.0)
+                            .frame(width: pulseR, height: pulseR)
+
+                        // Coaxial dome
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        Color(white: 0.22),
+                                        Color(white: 0.06)
+                                    ],
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: driverR * 0.5
+                                )
+                            )
+                            .frame(width: driverR * 0.7, height: driverR * 0.7)
+                            .shadow(color: Color.black.opacity(0.6), radius: 6)
+
+                        // Center dust cap
+                        Circle()
+                            .fill(Color.white.opacity(0.35))
+                            .frame(width: driverR * 0.18, height: driverR * 0.18)
+                    }
+                    .position(x: driverX, y: driverY)
+                    .opacity(0.7)
+
+                    // Box Edition corner engraving
+                    VStack {
+                        HStack {
+                            Text("COTODAMA BOX")
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                .foregroundStyle(Color.white.opacity(0.3))
+                            Spacer()
+                            Text("TRANSPARENT ACOUSTICS")
+                                .font(.system(size: 8, weight: .medium, design: .monospaced))
+                                .foregroundStyle(Color.white.opacity(0.2))
+                        }
+                        .padding(.horizontal, 22)
+                        .padding(.top, 16)
+                        Spacer()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct CotodamaBoxView: View {
+    let cur: String
+    let next: String
+    let index: Int
+    let progress: Double
+    let accent: Color
+    var animated: Bool = true
+    let s: LStyle
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let heroSize = max(15.0, min(22.0, 18.5 * CGFloat(s.scale)))
+            let compSize = max(11.0, min(15.0, 13.0 * CGFloat(s.scale)))
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                // Floating 3D Lyrics suspended in transparent glass
+                VStack(spacing: 12) {
+                    ZStack {
+                        // Subtle inverted ghost reflection (refraction within the 3D acrylic box)
+                        FillText(
+                            text: s.upper ? cur.uppercased() : cur,
+                            p: progress,
+                            on: Color.white.opacity(0.08),
+                            off: Color.white.opacity(0.03)
+                        )
+                        .font(.system(size: heroSize, weight: .medium, design: .rounded))
+                        .offset(y: 12)
+                        .blur(radius: 1.5)
+
+                        // Primary suspended glass text
+                        FillText(
+                            text: s.upper ? cur.uppercased() : cur,
+                            p: progress,
+                            on: Color.white,
+                            off: Color.white.opacity(0.35)
+                        )
+                        .font(.system(size: heroSize, weight: .medium, design: .rounded))
+                        .shadow(color: Color.black.opacity(0.8), radius: 8, y: 4)
+                    }
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: w - 90)
+
+                    if !next.isEmpty {
+                        Text(s.upper ? next.uppercased() : next)
+                            .font(.system(size: compSize, weight: .regular, design: .rounded))
+                            .foregroundStyle(Color.white.opacity(0.22))
+                            .lineLimit(1)
+                            .padding(.top, 6)
+                    }
+                }
+
+                Spacer()
+            }
+            .frame(width: w, height: h)
+        }
+    }
+}
+
+// =============================================================================
+// 3. COTODAMA LYRIC SYNC (Auto Generative Expression Engine)
+// =============================================================================
+
+struct CotodamaAdaptiveBackground: View {
     var c0: Color = .white
     var c1: Color = .white
-    var intensity: Double = 0.5
     var animated: Bool = true
 
     var body: some View {
@@ -2385,7 +2722,7 @@ struct CotodamaGenerativeBackground: View {
                         .blur(radius: 85)
                         .offset(x: CGFloat(ox2), y: CGFloat(oy2))
 
-                    // 2. Audio-Reactive Generative Sound Horizon
+                    // 2. Audio-Reactive Generative Sound Horizon Wave across center
                     Canvas { c, size in
                         let width = size.width
                         let midY = size.height * 0.5
@@ -2428,49 +2765,18 @@ struct CotodamaGenerativeBackground: View {
     }
 }
 
-// MARK: - Specialized Background Bridges
-
-struct CotodamaCanvasBackground: View {
-    var tint: Color = .white
-    var animated: Bool = true
-    var body: some View {
-        CotodamaGenerativeBackground(c0: tint, c1: .white, intensity: 0.45, animated: animated)
-    }
-}
-
+// Fallbacks for remaining modes
 struct CotodamaFlowBackground: View {
     var c0: Color
     var c1: Color
     var animated: Bool = true
-    var body: some View {
-        CotodamaGenerativeBackground(c0: c0, c1: c1, intensity: 0.4, animated: animated)
-    }
+    var body: some View { CotodamaAdaptiveBackground(c0: c0, c1: c1, animated: animated) }
 }
 
 struct CotodamaBeatBackground: View {
     var tint: Color = .white
     var animated: Bool = true
-    var body: some View {
-        CotodamaGenerativeBackground(c0: tint, c1: .white, intensity: 0.7, animated: animated)
-    }
-}
-
-struct CotodamaBoxBackground: View {
-    var tint: Color = .white
-    var animated: Bool = true
-    var body: some View {
-        CotodamaGenerativeBackground(c0: tint, c1: .white, intensity: 0.5, animated: animated)
-    }
-}
-
-struct CotodamaAdaptiveBackground: View {
-    var c0: Color
-    var c1: Color
-    var animated: Bool = true
-
-    var body: some View {
-        CotodamaGenerativeBackground(c0: c0, c1: c1, intensity: 0.5, animated: animated)
-    }
+    var body: some View { CotodamaAdaptiveBackground(c0: tint, c1: .white, animated: animated) }
 }
 
 // MARK: - Instrumental Motion Visualizer
@@ -2832,21 +3138,7 @@ struct CotodamaAmbientView: View {
     }
 }
 
-// MARK: - Compatibility Bridges for Sub-Themes
-
-struct CotodamaCanvasView: View {
-    let cur: String
-    let next: String
-    let index: Int
-    let progress: Double
-    let accent: Color
-    var animated: Bool = true
-    let s: LStyle
-
-    var body: some View {
-        CotodamaGrooveView(cur: cur, next: next, progress: progress, accent: accent, animated: animated, s: s)
-    }
-}
+// MARK: - Compatibility Bridges for Extra Sub-Themes
 
 struct CotodamaFlowView: View {
     let cur: String
@@ -2874,20 +3166,6 @@ struct CotodamaBeatView: View {
 
     var body: some View {
         CotodamaKineticView(cur: cur, next: next, progress: progress, accent: accent, animated: animated, s: s)
-    }
-}
-
-struct CotodamaBoxView: View {
-    let cur: String
-    let next: String
-    let index: Int
-    let progress: Double
-    let accent: Color
-    var animated: Bool = true
-    let s: LStyle
-
-    var body: some View {
-        CotodamaBalladView(cur: cur, prev: "", next: next, progress: progress, accent: accent, animated: animated, s: s)
     }
 }
 

@@ -26,7 +26,7 @@ enum LyricTheme: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .cotodama: return "COTODAMA Lyric Sync"
+        case .cotodama: return "COTODAMA Lyric Sync (Auto)"
         case .cotodamaCanvas: return "Cotodama Canvas Edition"
         case .cotodamaBox: return "Cotodama Box Edition"
         case .cotodamaFlow: return "Cotodama Ballad Mode"
